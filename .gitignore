@@ -1,0 +1,42 @@
+# Build artifacts
+**/bin/
+**/obj/
+
+# Visual Studio / VS Code
+.vs/
+.vscode/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# .NET user/local files
+*.rsuser
+*.dbmdl
+
+# ASP.NET / configuration secrets
+appsettings.Development.json
+secrets.json
+
+# Logs and temp
+*.log
+*.tmp
+*.temp
+
+# Test results / coverage
+TestResults/
+*.trx
+coverage/
+*.coverage
+*.coveragexml
+
+# NuGet
+*.nupkg
+*.snupkg
+
+# Node (if added later)
+node_modules/
+
+# OS files
+.DS_Store
+Thumbs.db

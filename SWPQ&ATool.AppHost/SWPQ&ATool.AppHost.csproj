@@ -1,0 +1,21 @@
+<Project Sdk="Aspire.AppHost.Sdk/13.1.0">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <UserSecretsId>c8b67055-2ee7-4355-93b0-8a27fc51ca9c</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\AuthService\AuthService.csproj" />
+    <ProjectReference Include="..\QuestionService\QuestionService.csproj" />
+    <ProjectReference Include="..\AnswerService\AnswerService.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Aspire.Hosting.PostgreSQL" Version="8.2.2" />
+  </ItemGroup>
+
+</Project>

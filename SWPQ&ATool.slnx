@@ -1,0 +1,8 @@
+<Solution>
+  <Project Path="AnswerService/AnswerService.csproj" />
+  <Project Path="AuthService/AuthService.csproj" />
+  <Project Path="QuestionService/QuestionService.csproj" />
+  <Project Path="SWPQ&amp;ATool.AppHost/SWPQ&amp;ATool.AppHost.csproj" />
+  <Project Path="SWPQ&amp;ATool.ServiceDefaults/SWPQ&amp;ATool.ServiceDefaults.csproj" />
+  <Project Path="SWPQ&amp;ATool/SWPQ&amp;ATool.csproj" />
+</Solution>

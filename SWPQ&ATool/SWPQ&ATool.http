@@ -1,0 +1,6 @@
+@SWPQ_ATool_HostAddress = http://localhost:5200
+
+GET {{SWPQ_ATool_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
