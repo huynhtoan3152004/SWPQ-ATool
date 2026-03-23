@@ -50,6 +50,14 @@ public class AuthController : ControllerBase
         return Ok(students);
     }
 
+    [HttpGet("teachers")]
+    [Authorize(Roles = "GVHD,ADMIN")]
+    public async Task<IActionResult> GetTeachers(CancellationToken cancellationToken)
+    {
+        var teachers = await _authService.GetTeachersAsync(cancellationToken);
+        return Ok(teachers);
+    }
+
     [HttpPatch("users/{userId:guid}/role")]
     [Authorize(Roles = "ADMIN")]
     public async Task<IActionResult> ChangeRole(Guid userId, [FromBody] ChangeUserRoleRequest request, CancellationToken cancellationToken)

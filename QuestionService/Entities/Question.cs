@@ -28,3 +28,21 @@ public class Question
     public Guid? AssignedTo { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }
+
+public class Semester
+{
+    public Guid Id { get; set; } = Guid.NewGuid();
+    public string Name { get; set; } = string.Empty;
+    public int Year { get; set; }
+    public int Month { get; set; }
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+}
+
+public class Topic
+{
+    public Guid Id { get; set; } = Guid.NewGuid();
+    public string Name { get; set; } = string.Empty;
+    public Guid SemesterId { get; set; }
+    public Guid LecturerId { get; set; }
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+}

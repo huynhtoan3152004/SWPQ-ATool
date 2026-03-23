@@ -41,9 +41,16 @@ public class QuestionsController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetAll([FromQuery] Guid? topicId, [FromQuery] Guid? semesterId, [FromQuery] QuestionVisibility? visibility, CancellationToken cancellationToken)
+    public async Task<IActionResult> GetAll(
+        [FromQuery] Guid? topicId,
+        [FromQuery] Guid? semesterId,
+        [FromQuery] Guid? assignedTo,
+        [FromQuery] QuestionVisibility? visibility,
+        [FromQuery] int? year,
+        [FromQuery] int? month,
+        CancellationToken cancellationToken)
     {
-        var response = await _questionService.GetAllAsync(topicId, semesterId, visibility, cancellationToken);
+        var response = await _questionService.GetAllAsync(topicId, semesterId, assignedTo, visibility, year, month, cancellationToken);
         return Ok(response);
     }
 
@@ -94,9 +101,15 @@ public class QuestionsController : ControllerBase
     [Authorize(Roles = "TEACHER")]
     public async Task<IActionResult> MarkAnswered(Guid id, CancellationToken cancellationToken)
     {
+        var teacherId = GetUserId();
+        if (teacherId is null)
+        {
+            return Unauthorized();
+        }
+
         try
         {
-            var response = await _questionService.MarkAnsweredAsync(id, cancellationToken);
+            var response = await _questionService.MarkAnsweredAsync(id, teacherId.Value, cancellationToken);
             return response is null ? NotFound() : Ok(response);
         }
         catch (InvalidOperationException ex)

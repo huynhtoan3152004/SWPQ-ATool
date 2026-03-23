@@ -25,27 +25,45 @@ public class QuestionRepository : IQuestionRepository
         return _dbContext.Questions.FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
     }
 
-    public Task<List<Question>> GetAllAsync(Guid? topicId, Guid? semesterId, QuestionVisibility? visibility, CancellationToken cancellationToken = default)
+    public Task<List<Question>> GetAllAsync(Guid? topicId, Guid? semesterId, Guid? assignedTo, QuestionVisibility? visibility, int? year, int? month, CancellationToken cancellationToken = default)
     {
-        var query = _dbContext.Questions.AsQueryable();
+        var query = from question in _dbContext.Questions
+                    join semester in _dbContext.Semesters on question.SemesterId equals semester.Id
+                    select new { question, semester };
 
         if (topicId.HasValue)
         {
-            query = query.Where(x => x.TopicId == topicId.Value);
+            query = query.Where(x => x.question.TopicId == topicId.Value);
         }
 
         if (semesterId.HasValue)
         {
-            query = query.Where(x => x.SemesterId == semesterId.Value);
+            query = query.Where(x => x.question.SemesterId == semesterId.Value);
+        }
+
+        if (assignedTo.HasValue)
+        {
+            query = query.Where(x => x.question.AssignedTo == assignedTo.Value);
         }
 
         if (visibility.HasValue)
         {
-            query = query.Where(x => x.Visibility == visibility.Value);
+            query = query.Where(x => x.question.Visibility == visibility.Value);
+        }
+
+        if (year.HasValue)
+        {
+            query = query.Where(x => x.semester.Year == year.Value);
+        }
+
+        if (month.HasValue)
+        {
+            query = query.Where(x => x.semester.Month == month.Value);
         }
 
         return query
-            .OrderByDescending(x => x.CreatedAt)
+            .OrderByDescending(x => x.question.CreatedAt)
+            .Select(x => x.question)
             .ToListAsync(cancellationToken);
     }
 

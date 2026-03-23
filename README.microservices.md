@@ -103,16 +103,29 @@ Mỗi service sở hữu DB riêng theo đúng microservice boundary.
 - `POST /auth/register`
 - `POST /auth/login`
 - `GET /auth/students` (role `GVHD`, `ADMIN`)
+- `GET /auth/teachers` (role `GVHD`, `ADMIN`)
 - `PATCH /auth/users/{userId}/role` (role `ADMIN`)
 
 ### QuestionService
 
-- `POST /questions` (role `STUDENT`)
-- `GET /questions`
+- `POST /questions` (role `STUDENT`) -> tự gán cho giảng viên phụ trách topic
+- `GET /questions?topicId=&semesterId=&assignedTo=&visibility=&year=&month=`
 - `GET /questions/{id}`
 - `PATCH /questions/{id}/approve` (role `GVHD`)
 - `PATCH /questions/{id}/assign` (role `GVHD`)
 - `PATCH /questions/{id}/mark-answered` (role `TEACHER`, dùng nội bộ qua AnswerService)
+
+### Semester APIs (QuestionService)
+
+- `POST /semesters` (role `GVHD`, `ADMIN`)
+- `GET /semesters?name=&year=&month=`
+
+### Topic APIs (QuestionService)
+
+- `POST /topics` (role `GVHD`, `ADMIN`)
+- `GET /topics?semesterId=&lecturerId=&year=&month=&keyword=`
+- `GET /topics/my` (role `TEACHER`)
+- `PATCH /topics/{id}` (role `TEACHER`, `GVHD`, `ADMIN`)
 
 ### AnswerService
 
@@ -121,11 +134,12 @@ Mỗi service sở hữu DB riêng theo đúng microservice boundary.
 
 ## 6) Demo flow nhanh trên Swagger
 
-1. `POST /auth/login` bằng Student -> lấy token.
-2. Dùng token Student gọi `POST /questions`.
-3. Login GVHD -> token GVHD -> gọi approve + assign.
-4. Login Teacher -> token Teacher -> gọi `POST /answers`.
-5. Gọi `GET /questions/{id}` để xác nhận status `ANSWERED`.
+1. Login `GVHD` -> gọi `GET /auth/teachers` để lấy lecturer id.
+2. Tạo semester: `POST /semesters`.
+3. Tạo topic có lecturer: `POST /topics`.
+4. Login `Student` -> tạo câu hỏi vào topic: `POST /questions`.
+5. Login `Teacher` (lecturer đã gán) -> trả lời: `POST /answers`.
+6. Gọi `GET /questions/{id}` để xác nhận status `ANSWERED`.
 
 ## 7) Database: có cần tạo thủ công trên máy không?
 

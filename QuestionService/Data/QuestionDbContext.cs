@@ -10,6 +10,8 @@ public class QuestionDbContext : DbContext
     }
 
     public DbSet<Question> Questions => Set<Question>();
+    public DbSet<Semester> Semesters => Set<Semester>();
+    public DbSet<Topic> Topics => Set<Topic>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -26,6 +28,32 @@ public class QuestionDbContext : DbContext
             entity.Property(x => x.CreatedAt).IsRequired();
             entity.HasIndex(x => new { x.TopicId, x.SemesterId, x.Status });
             entity.HasIndex(x => new { x.TopicId, x.SemesterId, x.Visibility });
+        });
+
+        modelBuilder.Entity<Semester>(entity =>
+        {
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Name).IsRequired().HasMaxLength(100);
+            entity.Property(x => x.Year).IsRequired();
+            entity.Property(x => x.Month).IsRequired();
+            entity.Property(x => x.CreatedAt).IsRequired();
+            entity.HasIndex(x => new { x.Year, x.Month, x.Name }).IsUnique();
+        });
+
+        modelBuilder.Entity<Topic>(entity =>
+        {
+            entity.HasKey(x => x.Id);
+            entity.Property(x => x.Name).IsRequired().HasMaxLength(200);
+            entity.Property(x => x.SemesterId).IsRequired();
+            entity.Property(x => x.LecturerId).IsRequired();
+            entity.Property(x => x.CreatedAt).IsRequired();
+            entity.HasIndex(x => new { x.SemesterId, x.Name }).IsUnique();
+            entity.HasIndex(x => x.LecturerId);
+
+            entity.HasOne<Semester>()
+                .WithMany()
+                .HasForeignKey(x => x.SemesterId)
+                .OnDelete(DeleteBehavior.Restrict);
         });
     }
 }

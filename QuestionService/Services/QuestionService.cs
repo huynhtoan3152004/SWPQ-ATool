@@ -7,10 +7,12 @@ namespace QuestionService.Services;
 public class QuestionService : IQuestionService
 {
     private readonly IQuestionRepository _questionRepository;
+    private readonly ITopicRepository _topicRepository;
 
-    public QuestionService(IQuestionRepository questionRepository)
+    public QuestionService(IQuestionRepository questionRepository, ITopicRepository topicRepository)
     {
         _questionRepository = questionRepository;
+        _topicRepository = topicRepository;
     }
 
     public async Task<QuestionResponse> CreateAsync(Guid askedBy, CreateQuestionRequest request, CancellationToken cancellationToken = default)
@@ -25,6 +27,12 @@ public class QuestionService : IQuestionService
             throw new InvalidOperationException("TopicId and SemesterId are required.");
         }
 
+        var topic = await _topicRepository.GetByTopicAndSemesterAsync(request.TopicId, request.SemesterId, cancellationToken);
+        if (topic is null)
+        {
+            throw new InvalidOperationException("Invalid TopicId/SemesterId combination.");
+        }
+
         var question = new Question
         {
             Title = request.Title.Trim(),
@@ -33,7 +41,8 @@ public class QuestionService : IQuestionService
             SemesterId = request.SemesterId,
             AskedBy = askedBy,
             Visibility = request.Visibility,
-            Status = QuestionStatus.PENDING,
+            AssignedTo = topic.LecturerId,
+            Status = QuestionStatus.ASSIGNED,
             CreatedAt = DateTime.UtcNow
         };
 
@@ -41,9 +50,9 @@ public class QuestionService : IQuestionService
         return ToResponse(created);
     }
 
-    public async Task<List<QuestionResponse>> GetAllAsync(Guid? topicId, Guid? semesterId, QuestionVisibility? visibility, CancellationToken cancellationToken = default)
+    public async Task<List<QuestionResponse>> GetAllAsync(Guid? topicId, Guid? semesterId, Guid? assignedTo, QuestionVisibility? visibility, int? year, int? month, CancellationToken cancellationToken = default)
     {
-        var questions = await _questionRepository.GetAllAsync(topicId, semesterId, visibility, cancellationToken);
+        var questions = await _questionRepository.GetAllAsync(topicId, semesterId, assignedTo, visibility, year, month, cancellationToken);
         return questions.Select(ToResponse).ToList();
     }
 
@@ -93,7 +102,7 @@ public class QuestionService : IQuestionService
         return ToResponse(question);
     }
 
-    public async Task<QuestionResponse?> MarkAnsweredAsync(Guid questionId, CancellationToken cancellationToken = default)
+    public async Task<QuestionResponse?> MarkAnsweredAsync(Guid questionId, Guid teacherId, CancellationToken cancellationToken = default)
     {
         var question = await _questionRepository.GetByIdAsync(questionId, cancellationToken);
         if (question is null)
@@ -104,6 +113,11 @@ public class QuestionService : IQuestionService
         if (question.Status != QuestionStatus.ASSIGNED)
         {
             throw new InvalidOperationException("Only ASSIGNED question can be marked ANSWERED.");
+        }
+
+        if (!question.AssignedTo.HasValue || question.AssignedTo.Value != teacherId)
+        {
+            throw new InvalidOperationException("Only assigned lecturer can mark question as ANSWERED.");
         }
 
         question.Status = QuestionStatus.ANSWERED;

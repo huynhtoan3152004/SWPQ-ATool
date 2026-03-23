@@ -1,0 +1,681 @@
+{
+  "info": {
+    "name": "SWP Q&A - All APIs by Role",
+    "_postman_id": "b6e8f29d-8b9f-45a7-8b09-36f7f4f2f5c1",
+    "description": "Collection test full API theo từng role (ADMIN/GVHD/STUDENT/TEACHER). Mỗi folder có request login đúng role để set token.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "00 - Public Auth",
+      "item": [
+        {
+          "name": "Register (optional)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"newuser{{$timestamp}}@swp.local\",\n  \"password\": \"123456\"\n}"
+            },
+            "url": "{{auth_base}}/auth/register"
+          }
+        },
+        {
+          "name": "Login ADMIN",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+                  "const json = pm.response.json();",
+                  "pm.collectionVariables.set('token_admin', json.accessToken);",
+                  "pm.collectionVariables.set('admin_id', json.userId);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{admin_email}}\",\n  \"password\": \"{{default_password}}\"\n}"
+            },
+            "url": "{{auth_base}}/auth/login"
+          }
+        },
+        {
+          "name": "Login GVHD",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+                  "const json = pm.response.json();",
+                  "pm.collectionVariables.set('token_gvhd', json.accessToken);",
+                  "pm.collectionVariables.set('gvhd_id', json.userId);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{gvhd_email}}\",\n  \"password\": \"{{default_password}}\"\n}"
+            },
+            "url": "{{auth_base}}/auth/login"
+          }
+        },
+        {
+          "name": "Login STUDENT",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+                  "const json = pm.response.json();",
+                  "pm.collectionVariables.set('token_student', json.accessToken);",
+                  "pm.collectionVariables.set('student_id', json.userId);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{student_email}}\",\n  \"password\": \"{{default_password}}\"\n}"
+            },
+            "url": "{{auth_base}}/auth/login"
+          }
+        },
+        {
+          "name": "Login TEACHER",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+                  "const json = pm.response.json();",
+                  "pm.collectionVariables.set('token_teacher', json.accessToken);",
+                  "pm.collectionVariables.set('teacher_id', json.userId);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{teacher_email}}\",\n  \"password\": \"{{default_password}}\"\n}"
+            },
+            "url": "{{auth_base}}/auth/login"
+          }
+        }
+      ]
+    },
+    {
+      "name": "01 - ADMIN APIs",
+      "item": [
+        {
+          "name": "Login ADMIN",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{admin_email}}\",\n  \"password\": \"{{default_password}}\"\n}"
+            },
+            "url": "{{auth_base}}/auth/login"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "pm.collectionVariables.set('token_admin', json.accessToken);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Students",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token_admin}}" }
+            ],
+            "url": "{{auth_base}}/auth/students"
+          }
+        },
+        {
+          "name": "Get Teachers",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const list = pm.response.json();",
+                  "if (Array.isArray(list) && list.length > 0) {",
+                  "  pm.collectionVariables.set('teacher_id', list[0].id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token_admin}}" }
+            ],
+            "url": "{{auth_base}}/auth/teachers"
+          }
+        },
+        {
+          "name": "Change Role (optional)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token_admin}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"role\": \"STUDENT\"\n}"
+            },
+            "url": "{{auth_base}}/auth/users/{{target_user_id}}/role"
+          }
+        }
+      ]
+    },
+    {
+      "name": "02 - GVHD APIs",
+      "item": [
+        {
+          "name": "Login GVHD",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{gvhd_email}}\",\n  \"password\": \"{{default_password}}\"\n}"
+            },
+            "url": "{{auth_base}}/auth/login"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "pm.collectionVariables.set('token_gvhd', json.accessToken);",
+                  "pm.collectionVariables.set('gvhd_id', json.userId);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Teachers",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const list = pm.response.json();",
+                  "if (Array.isArray(list) && list.length > 0) {",
+                  "  pm.collectionVariables.set('teacher_id', list[0].id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token_gvhd}}" }
+            ],
+            "url": "{{auth_base}}/auth/teachers"
+          }
+        },
+        {
+          "name": "Create Semester",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json && json.id) pm.collectionVariables.set('semester_id', json.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token_gvhd}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"SPRING\",\n  \"year\": 2026,\n  \"month\": 3\n}"
+            },
+            "url": "{{question_base}}/semesters"
+          }
+        },
+        {
+          "name": "List Semesters",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token_gvhd}}" }
+            ],
+            "url": "{{question_base}}/semesters"
+          }
+        },
+        {
+          "name": "Create Topic",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json && json.id) pm.collectionVariables.set('topic_id', json.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token_gvhd}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Distributed Systems\",\n  \"semesterId\": \"{{semester_id}}\",\n  \"lecturerId\": \"{{teacher_id}}\"\n}"
+            },
+            "url": "{{question_base}}/topics"
+          }
+        },
+        {
+          "name": "List Topics",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token_gvhd}}" }
+            ],
+            "url": "{{question_base}}/topics?semesterId={{semester_id}}"
+          }
+        },
+        {
+          "name": "Update Topic (reassign allowed)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token_gvhd}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Distributed Systems Advanced\",\n  \"lecturerId\": \"{{teacher_id}}\"\n}"
+            },
+            "url": "{{question_base}}/topics/{{topic_id}}"
+          }
+        },
+        {
+          "name": "Approve Question (legacy)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token_gvhd}}" }
+            ],
+            "url": "{{question_base}}/questions/{{question_id}}/approve"
+          }
+        },
+        {
+          "name": "Assign Question (legacy)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token_gvhd}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"teacherId\": \"{{teacher_id}}\"\n}"
+            },
+            "url": "{{question_base}}/questions/{{question_id}}/assign"
+          }
+        }
+      ]
+    },
+    {
+      "name": "03 - STUDENT APIs",
+      "item": [
+        {
+          "name": "Login STUDENT",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{student_email}}\",\n  \"password\": \"{{default_password}}\"\n}"
+            },
+            "url": "{{auth_base}}/auth/login"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "pm.collectionVariables.set('token_student', json.accessToken);",
+                  "pm.collectionVariables.set('student_id', json.userId);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "List Semesters",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token_student}}" }
+            ],
+            "url": "{{question_base}}/semesters"
+          }
+        },
+        {
+          "name": "List Topics",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token_student}}" }
+            ],
+            "url": "{{question_base}}/topics?semesterId={{semester_id}}"
+          }
+        },
+        {
+          "name": "Create Question",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json && json.id) pm.collectionVariables.set('question_id', json.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token_student}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Question {{$timestamp}}\",\n  \"content\": \"How to implement CQRS in .NET microservices?\",\n  \"topicId\": \"{{topic_id}}\",\n  \"semesterId\": \"{{semester_id}}\",\n  \"visibility\": \"PUBLIC\"\n}"
+            },
+            "url": "{{question_base}}/questions"
+          }
+        },
+        {
+          "name": "List Questions",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token_student}}" }
+            ],
+            "url": "{{question_base}}/questions?semesterId={{semester_id}}"
+          }
+        },
+        {
+          "name": "Get Question Detail",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token_student}}" }
+            ],
+            "url": "{{question_base}}/questions/{{question_id}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "04 - TEACHER APIs",
+      "item": [
+        {
+          "name": "Login TEACHER",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{teacher_email}}\",\n  \"password\": \"{{default_password}}\"\n}"
+            },
+            "url": "{{auth_base}}/auth/login"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "pm.collectionVariables.set('token_teacher', json.accessToken);",
+                  "pm.collectionVariables.set('teacher_id', json.userId);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "My Topics",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token_teacher}}" }
+            ],
+            "url": "{{question_base}}/topics/my"
+          }
+        },
+        {
+          "name": "List My Questions",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token_teacher}}" }
+            ],
+            "url": "{{question_base}}/questions?assignedTo={{teacher_id}}"
+          }
+        },
+        {
+          "name": "Update Topic (teacher own topic)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token_teacher}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Distributed Systems - Teacher Updated\"\n}"
+            },
+            "url": "{{question_base}}/topics/{{topic_id}}"
+          }
+        },
+        {
+          "name": "Mark Question Answered",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token_teacher}}" }
+            ],
+            "url": "{{question_base}}/questions/{{question_id}}/mark-answered"
+          }
+        },
+        {
+          "name": "Create Answer",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json && json.id) pm.collectionVariables.set('answer_id', json.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token_teacher}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"questionId\": \"{{question_id}}\",\n  \"content\": \"CQRS can be implemented by separating write model and read model with MediatR.\"\n}"
+            },
+            "url": "{{answer_base}}/answers"
+          }
+        },
+        {
+          "name": "Get Answers by Question",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token_teacher}}" }
+            ],
+            "url": "{{answer_base}}/answers?questionId={{question_id}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "05 - Smoke E2E (Run Order)",
+      "description": "Run folder this order: Login GVHD -> Get Teachers -> Create Semester -> Create Topic -> Login STUDENT -> Create Question -> Login TEACHER -> Create Answer -> Get Question Detail",
+      "item": [
+        {
+          "name": "1) Login GVHD",
+          "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"email\": \"{{gvhd_email}}\",\n  \"password\": \"{{default_password}}\"\n}" }, "url": "{{auth_base}}/auth/login" },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["const j = pm.response.json(); pm.collectionVariables.set('token_gvhd', j.accessToken);"] } }]
+        },
+        {
+          "name": "2) Get Teachers",
+          "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{token_gvhd}}" }], "url": "{{auth_base}}/auth/teachers" },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["const l=pm.response.json(); if(Array.isArray(l)&&l.length){pm.collectionVariables.set('teacher_id',l[0].id);} "] } }]
+        },
+        {
+          "name": "3) Create Semester",
+          "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{token_gvhd}}" }], "body": { "mode": "raw", "raw": "{\n  \"name\": \"FALL\",\n  \"year\": 2026,\n  \"month\": 9\n}" }, "url": "{{question_base}}/semesters" },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["const j=pm.response.json(); if(j.id){pm.collectionVariables.set('semester_id',j.id);} "] } }]
+        },
+        {
+          "name": "4) Create Topic",
+          "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{token_gvhd}}" }], "body": { "mode": "raw", "raw": "{\n  \"name\": \"Software Architecture\",\n  \"semesterId\": \"{{semester_id}}\",\n  \"lecturerId\": \"{{teacher_id}}\"\n}" }, "url": "{{question_base}}/topics" },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["const j=pm.response.json(); if(j.id){pm.collectionVariables.set('topic_id',j.id);} "] } }]
+        },
+        {
+          "name": "5) Login STUDENT",
+          "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"email\": \"{{student_email}}\",\n  \"password\": \"{{default_password}}\"\n}" }, "url": "{{auth_base}}/auth/login" },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["const j=pm.response.json(); pm.collectionVariables.set('token_student',j.accessToken); pm.collectionVariables.set('student_id',j.userId);"] } }]
+        },
+        {
+          "name": "6) Create Question",
+          "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{token_student}}" }], "body": { "mode": "raw", "raw": "{\n  \"title\": \"E2E question {{$timestamp}}\",\n  \"content\": \"Please explain eventual consistency in microservices\",\n  \"topicId\": \"{{topic_id}}\",\n  \"semesterId\": \"{{semester_id}}\",\n  \"visibility\": \"PUBLIC\"\n}" }, "url": "{{question_base}}/questions" },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["const j=pm.response.json(); if(j.id){pm.collectionVariables.set('question_id',j.id);} "] } }]
+        },
+        {
+          "name": "7) Login TEACHER",
+          "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"email\": \"{{teacher_email}}\",\n  \"password\": \"{{default_password}}\"\n}" }, "url": "{{auth_base}}/auth/login" },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["const j=pm.response.json(); pm.collectionVariables.set('token_teacher',j.accessToken); pm.collectionVariables.set('teacher_id',j.userId);"] } }]
+        },
+        {
+          "name": "8) Create Answer",
+          "request": { "method": "POST", "header": [{ "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{token_teacher}}" }], "body": { "mode": "raw", "raw": "{\n  \"questionId\": \"{{question_id}}\",\n  \"content\": \"Use outbox/inbox patterns and idempotent handlers.\"\n}" }, "url": "{{answer_base}}/answers" }
+        },
+        {
+          "name": "9) Verify Question is ANSWERED",
+          "request": { "method": "GET", "header": [{ "key": "Authorization", "value": "Bearer {{token_teacher}}" }], "url": "{{question_base}}/questions/{{question_id}}" },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["const j=pm.response.json(); pm.test('Question status is ANSWERED', () => pm.expect(j.status).to.eql('ANSWERED')); "] } }]
+        }
+      ]
+    }
+  ],
+  "variable": [
+    { "key": "auth_base", "value": "http://localhost:5001" },
+    { "key": "question_base", "value": "http://localhost:5028" },
+    { "key": "answer_base", "value": "http://localhost:5260" },
+
+    { "key": "default_password", "value": "123456" },
+    { "key": "admin_email", "value": "admin@swp.local" },
+    { "key": "gvhd_email", "value": "gvhd1@swp.local" },
+    { "key": "student_email", "value": "student1@swp.local" },
+    { "key": "teacher_email", "value": "teacher1@swp.local" },
+
+    { "key": "token_admin", "value": "" },
+    { "key": "token_gvhd", "value": "" },
+    { "key": "token_student", "value": "" },
+    { "key": "token_teacher", "value": "" },
+
+    { "key": "admin_id", "value": "" },
+    { "key": "gvhd_id", "value": "" },
+    { "key": "student_id", "value": "" },
+    { "key": "teacher_id", "value": "" },
+
+    { "key": "semester_id", "value": "" },
+    { "key": "topic_id", "value": "" },
+    { "key": "question_id", "value": "" },
+    { "key": "answer_id", "value": "" },
+    { "key": "target_user_id", "value": "" }
+  ]
+}

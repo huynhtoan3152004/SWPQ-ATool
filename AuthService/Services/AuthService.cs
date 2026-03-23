@@ -74,6 +74,12 @@ public class AuthService : IAuthService
         return students.Select(MapToUserResponse).ToList();
     }
 
+    public async Task<List<UserResponse>> GetTeachersAsync(CancellationToken cancellationToken = default)
+    {
+        var teachers = await _userRepository.GetByRoleAsync(UserRole.TEACHER, cancellationToken);
+        return teachers.Select(MapToUserResponse).ToList();
+    }
+
     public async Task<UserResponse?> ChangeUserRoleAsync(Guid userId, UserRole role, CancellationToken cancellationToken = default)
     {
         var user = await _userRepository.GetByIdAsync(userId, cancellationToken);
