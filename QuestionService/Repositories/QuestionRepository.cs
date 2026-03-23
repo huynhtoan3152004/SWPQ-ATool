@@ -25,9 +25,28 @@ public class QuestionRepository : IQuestionRepository
         return _dbContext.Questions.FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
     }
 
-    public Task<List<Question>> GetAllAsync(CancellationToken cancellationToken = default)
+    public Task<List<Question>> GetAllAsync(Guid? topicId, Guid? semesterId, QuestionVisibility? visibility, CancellationToken cancellationToken = default)
     {
-        return _dbContext.Questions.OrderByDescending(x => x.CreatedAt).ToListAsync(cancellationToken);
+        var query = _dbContext.Questions.AsQueryable();
+
+        if (topicId.HasValue)
+        {
+            query = query.Where(x => x.TopicId == topicId.Value);
+        }
+
+        if (semesterId.HasValue)
+        {
+            query = query.Where(x => x.SemesterId == semesterId.Value);
+        }
+
+        if (visibility.HasValue)
+        {
+            query = query.Where(x => x.Visibility == visibility.Value);
+        }
+
+        return query
+            .OrderByDescending(x => x.CreatedAt)
+            .ToListAsync(cancellationToken);
     }
 
     public Task SaveChangesAsync(CancellationToken cancellationToken = default)

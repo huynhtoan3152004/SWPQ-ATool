@@ -1,5 +1,6 @@
 using AuthService.Models;
 using AuthService.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace AuthService.Controllers;
@@ -39,5 +40,21 @@ public class AuthController : ControllerBase
         }
 
         return Ok(response);
+    }
+
+    [HttpGet("students")]
+    [Authorize(Roles = "GVHD,ADMIN")]
+    public async Task<IActionResult> GetStudents(CancellationToken cancellationToken)
+    {
+        var students = await _authService.GetStudentsAsync(cancellationToken);
+        return Ok(students);
+    }
+
+    [HttpPatch("users/{userId:guid}/role")]
+    [Authorize(Roles = "ADMIN")]
+    public async Task<IActionResult> ChangeRole(Guid userId, [FromBody] ChangeUserRoleRequest request, CancellationToken cancellationToken)
+    {
+        var user = await _authService.ChangeUserRoleAsync(userId, request.Role, cancellationToken);
+        return user is null ? NotFound(new { message = "User not found." }) : Ok(user);
     }
 }

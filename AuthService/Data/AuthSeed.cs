@@ -19,6 +19,7 @@ public static class AuthSeed
 
         var users = new[]
         {
+            CreateUser("admin@swp.local", "123456", UserRole.ADMIN, hasher),
             CreateUser("student1@swp.local", "123456", UserRole.STUDENT, hasher),
             CreateUser("gvhd1@swp.local", "123456", UserRole.GVHD, hasher),
             CreateUser("teacher1@swp.local", "123456", UserRole.TEACHER, hasher)

@@ -2,6 +2,7 @@ namespace AuthService.Entities;
 
 public enum UserRole
 {
+    ADMIN = 0,
     STUDENT = 1,
     GVHD = 2,
     TEACHER = 3

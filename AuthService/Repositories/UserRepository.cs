@@ -18,6 +18,19 @@ public class UserRepository : IUserRepository
         return _dbContext.Users.FirstOrDefaultAsync(x => x.Email == email, cancellationToken);
     }
 
+    public Task<User?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        return _dbContext.Users.FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+    }
+
+    public Task<List<User>> GetByRoleAsync(UserRole role, CancellationToken cancellationToken = default)
+    {
+        return _dbContext.Users
+            .Where(x => x.Role == role)
+            .OrderBy(x => x.Email)
+            .ToListAsync(cancellationToken);
+    }
+
     public async Task AddAsync(User user, CancellationToken cancellationToken = default)
     {
         await _dbContext.Users.AddAsync(user, cancellationToken);
@@ -27,5 +40,10 @@ public class UserRepository : IUserRepository
     public Task<bool> ExistsByEmailAsync(string email, CancellationToken cancellationToken = default)
     {
         return _dbContext.Users.AnyAsync(x => x.Email == email, cancellationToken);
+    }
+
+    public Task SaveChangesAsync(CancellationToken cancellationToken = default)
+    {
+        return _dbContext.SaveChangesAsync(cancellationToken);
     }
 }

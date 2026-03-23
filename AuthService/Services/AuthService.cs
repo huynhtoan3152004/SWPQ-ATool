@@ -19,6 +19,11 @@ public class AuthService : IAuthService
 
     public async Task<AuthResponse> RegisterAsync(RegisterRequest request, CancellationToken cancellationToken = default)
     {
+        if (string.IsNullOrWhiteSpace(request.Email) || string.IsNullOrWhiteSpace(request.Password))
+        {
+            throw new InvalidOperationException("Email and password are required.");
+        }
+
         var email = request.Email.Trim().ToLowerInvariant();
         if (await _userRepository.ExistsByEmailAsync(email, cancellationToken))
         {
@@ -28,7 +33,7 @@ public class AuthService : IAuthService
         var user = new User
         {
             Email = email,
-            Role = request.Role
+            Role = UserRole.STUDENT
         };
 
         user.PasswordHash = _passwordHasher.HashPassword(user, request.Password);
@@ -40,6 +45,11 @@ public class AuthService : IAuthService
 
     public async Task<AuthResponse?> LoginAsync(LoginRequest request, CancellationToken cancellationToken = default)
     {
+        if (string.IsNullOrWhiteSpace(request.Email) || string.IsNullOrWhiteSpace(request.Password))
+        {
+            return null;
+        }
+
         var email = request.Email.Trim().ToLowerInvariant();
         var user = await _userRepository.GetByEmailAsync(email, cancellationToken);
 
@@ -56,5 +66,30 @@ public class AuthService : IAuthService
 
         var token = _tokenService.GenerateToken(user);
         return new AuthResponse(token, user.Id, user.Email, user.Role);
+    }
+
+    public async Task<List<UserResponse>> GetStudentsAsync(CancellationToken cancellationToken = default)
+    {
+        var students = await _userRepository.GetByRoleAsync(UserRole.STUDENT, cancellationToken);
+        return students.Select(MapToUserResponse).ToList();
+    }
+
+    public async Task<UserResponse?> ChangeUserRoleAsync(Guid userId, UserRole role, CancellationToken cancellationToken = default)
+    {
+        var user = await _userRepository.GetByIdAsync(userId, cancellationToken);
+        if (user is null)
+        {
+            return null;
+        }
+
+        user.Role = role;
+        await _userRepository.SaveChangesAsync(cancellationToken);
+
+        return MapToUserResponse(user);
+    }
+
+    private static UserResponse MapToUserResponse(User user)
+    {
+        return new UserResponse(user.Id, user.Email, user.Role);
     }
 }

@@ -18,10 +18,14 @@ public class QuestionDbContext : DbContext
             entity.HasKey(x => x.Id);
             entity.Property(x => x.Title).IsRequired().HasMaxLength(300);
             entity.Property(x => x.Content).IsRequired();
-            entity.Property(x => x.Topic).IsRequired().HasMaxLength(150);
+            entity.Property(x => x.AskedBy).IsRequired();
+            entity.Property(x => x.TopicId).IsRequired();
+            entity.Property(x => x.SemesterId).IsRequired();
+            entity.Property(x => x.Visibility).HasConversion<string>().IsRequired();
             entity.Property(x => x.Status).HasConversion<string>().IsRequired();
             entity.Property(x => x.CreatedAt).IsRequired();
-            entity.HasIndex(x => new { x.Topic, x.Status });
+            entity.HasIndex(x => new { x.TopicId, x.SemesterId, x.Status });
+            entity.HasIndex(x => new { x.TopicId, x.SemesterId, x.Visibility });
         });
     }
 }

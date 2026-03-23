@@ -13,14 +13,26 @@ public class QuestionService : IQuestionService
         _questionRepository = questionRepository;
     }
 
-    public async Task<QuestionResponse> CreateAsync(Guid studentId, CreateQuestionRequest request, CancellationToken cancellationToken = default)
+    public async Task<QuestionResponse> CreateAsync(Guid askedBy, CreateQuestionRequest request, CancellationToken cancellationToken = default)
     {
+        if (string.IsNullOrWhiteSpace(request.Title) || string.IsNullOrWhiteSpace(request.Content))
+        {
+            throw new InvalidOperationException("Title and content are required.");
+        }
+
+        if (request.TopicId == Guid.Empty || request.SemesterId == Guid.Empty)
+        {
+            throw new InvalidOperationException("TopicId and SemesterId are required.");
+        }
+
         var question = new Question
         {
             Title = request.Title.Trim(),
             Content = request.Content.Trim(),
-            Topic = request.Topic.Trim(),
-            StudentId = studentId,
+            TopicId = request.TopicId,
+            SemesterId = request.SemesterId,
+            AskedBy = askedBy,
+            Visibility = request.Visibility,
             Status = QuestionStatus.PENDING,
             CreatedAt = DateTime.UtcNow
         };
@@ -29,9 +41,9 @@ public class QuestionService : IQuestionService
         return ToResponse(created);
     }
 
-    public async Task<List<QuestionResponse>> GetAllAsync(CancellationToken cancellationToken = default)
+    public async Task<List<QuestionResponse>> GetAllAsync(Guid? topicId, Guid? semesterId, QuestionVisibility? visibility, CancellationToken cancellationToken = default)
     {
-        var questions = await _questionRepository.GetAllAsync(cancellationToken);
+        var questions = await _questionRepository.GetAllAsync(topicId, semesterId, visibility, cancellationToken);
         return questions.Select(ToResponse).ToList();
     }
 
@@ -106,8 +118,10 @@ public class QuestionService : IQuestionService
             question.Id,
             question.Title,
             question.Content,
-            question.StudentId,
-            question.Topic,
+            question.AskedBy,
+            question.TopicId,
+            question.SemesterId,
+            question.Visibility,
             question.Status,
             question.ApprovedBy,
             question.AssignedTo,

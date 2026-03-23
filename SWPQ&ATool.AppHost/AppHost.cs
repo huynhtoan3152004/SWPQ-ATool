@@ -1,6 +1,8 @@
 var builder = DistributedApplication.CreateBuilder(args);
 
-var postgres = builder.AddPostgres("postgres");
+var postgres = builder.AddPostgres("postgres")
+	.WithDataVolume()
+	.WithPgAdmin();
 
 var authDb = postgres.AddDatabase("authdb");
 var questionDb = postgres.AddDatabase("questiondb");

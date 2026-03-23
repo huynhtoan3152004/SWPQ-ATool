@@ -28,6 +28,7 @@ Mỗi service có:
 
 Được seed trong `AuthService`:
 
+- Admin: `admin@swp.local / 123456`
 - Student: `student1@swp.local / 123456`
 - GVHD: `gvhd1@swp.local / 123456`
 - Teacher: `teacher1@swp.local / 123456`
@@ -51,12 +52,58 @@ Sau khi chạy, terminal sẽ in link dashboard Aspire dạng:
 
 Vào dashboard để mở từng service và Swagger của từng service.
 
+### Quản lý DB trực quan
+
+- Trong Aspire dashboard sẽ có thêm resource `postgres` và `pgadmin`.
+- Bạn có thể mở `pgadmin` trực tiếp từ dashboard để xem schema/table/data.
+
+## 4.1) Xem DB bằng DBeaver
+
+Bạn hoàn toàn có thể dùng DBeaver để xem dữ liệu khi chạy qua AppHost.
+
+### Bước 1: chạy AppHost
+
+```powershell
+dotnet run --project .\SWPQ&ATool.AppHost\SWPQ&ATool.AppHost.csproj
+```
+
+### Bước 2: lấy port Postgres đang map ra máy
+
+```powershell
+docker ps
+```
+
+Tìm container postgres của Aspire, ví dụ cột PORTS có dạng:
+
+- `0.0.0.0:54329->5432/tcp`
+
+=> Port để vào DBeaver là `54329`.
+
+### Bước 3: cấu hình connection trong DBeaver
+
+- Cách chắc chắn nhất: mở Aspire Dashboard -> resource `postgres` -> copy `Connection String`.
+- Dán vào DBeaver (hoặc tách ra các field Host/Port/Database/User/Password).
+- Đổi `Database` thành một trong các DB cần xem:
+  - `authdb`
+  - `questiondb`
+  - `answerdb`
+
+## 4.2) Các database hiện có
+
+- `authdb`
+- `questiondb`
+- `answerdb`
+
+Mỗi service sở hữu DB riêng theo đúng microservice boundary.
+
 ## 5) API chính
 
 ### AuthService
 
 - `POST /auth/register`
 - `POST /auth/login`
+- `GET /auth/students` (role `GVHD`, `ADMIN`)
+- `PATCH /auth/users/{userId}/role` (role `ADMIN`)
 
 ### QuestionService
 

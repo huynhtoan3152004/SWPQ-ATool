@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using QuestionService.Entities;
 using QuestionService.Models;
 using QuestionService.Services;
 
@@ -28,14 +29,21 @@ public class QuestionsController : ControllerBase
             return Unauthorized();
         }
 
-        var response = await _questionService.CreateAsync(studentId.Value, request, cancellationToken);
-        return Ok(response);
+        try
+        {
+            var response = await _questionService.CreateAsync(studentId.Value, request, cancellationToken);
+            return Ok(response);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
+    public async Task<IActionResult> GetAll([FromQuery] Guid? topicId, [FromQuery] Guid? semesterId, [FromQuery] QuestionVisibility? visibility, CancellationToken cancellationToken)
     {
-        var response = await _questionService.GetAllAsync(cancellationToken);
+        var response = await _questionService.GetAllAsync(topicId, semesterId, visibility, cancellationToken);
         return Ok(response);
     }
 
