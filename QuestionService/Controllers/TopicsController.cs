@@ -8,7 +8,7 @@ namespace QuestionService.Controllers;
 
 [ApiController]
 [Route("topics")]
-[Authorize]
+[Authorize(Roles = "STUDENT,TEACHER,GVHD,ADMIN")]
 public class TopicsController : ControllerBase
 {
     private readonly ITopicService _topicService;
@@ -52,6 +52,20 @@ public class TopicsController : ControllerBase
         try
         {
             var response = await _topicService.GetByIdAsync(id, cancellationToken);
+            return response is null ? NotFound() : Ok(response);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    [HttpGet("by-code/{code}")]
+    public async Task<IActionResult> GetByCode(string code, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var response = await _topicService.GetByCodeAsync(code, cancellationToken);
             return response is null ? NotFound() : Ok(response);
         }
         catch (InvalidOperationException ex)

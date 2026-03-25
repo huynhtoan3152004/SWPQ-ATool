@@ -6,8 +6,11 @@ namespace AuthService.Services;
 public interface IAuthService
 {
     Task<AuthResponse> RegisterAsync(RegisterRequest request, CancellationToken cancellationToken = default);
+    Task<AuthResponse> RegisterLecturerAsync(RegisterLecturerRequest request, CancellationToken cancellationToken = default);
     Task<AuthResponse?> LoginAsync(LoginRequest request, CancellationToken cancellationToken = default);
     Task<List<UserResponse>> GetStudentsAsync(CancellationToken cancellationToken = default);
     Task<List<UserResponse>> GetTeachersAsync(CancellationToken cancellationToken = default);
+    Task<List<PendingRoleRequestResponse>> GetPendingRoleRequestsAsync(CancellationToken cancellationToken = default);
     Task<UserResponse?> ChangeUserRoleAsync(Guid userId, UserRole role, CancellationToken cancellationToken = default);
+    Task<UserResponse> AdminCreateUserAsync(AdminCreateUserRequest request, CancellationToken cancellationToken = default);
 }

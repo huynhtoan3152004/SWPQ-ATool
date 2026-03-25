@@ -52,17 +52,45 @@ public record SemesterResponse(
     DateTime CreatedAt);
 
 public record CreateTopicRequest(
-    string Name,
+    string Code,
+    string NameEn,
+    string NameVn,
+    string SubmittedBy,
+    string ResponsibleBy,
+    string Context,
+    string Problems,
+    string Actors,
+    string FunctionalRequirements,
+    string? References,
     Guid SemesterId,
     Guid LecturerId);
 
 public record UpdateTopicRequest(
     string? Name,
+    string? NameEn,
+    string? NameVn,
+    string? SubmittedBy,
+    string? ResponsibleBy,
+    string? Context,
+    string? Problems,
+    string? Actors,
+    string? FunctionalRequirements,
+    string? References,
     Guid? LecturerId);
 
 public record TopicResponse(
     Guid Id,
+    string Code,
     string Name,
+    string NameEn,
+    string NameVn,
+    string SubmittedBy,
+    string ResponsibleBy,
+    string Context,
+    string Problems,
+    string Actors,
+    string FunctionalRequirements,
+    string? References,
     Guid SemesterId,
     Guid LecturerId,
     string SemesterName,

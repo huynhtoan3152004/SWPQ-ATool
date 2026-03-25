@@ -31,6 +31,14 @@ public class UserRepository : IUserRepository
             .ToListAsync(cancellationToken);
     }
 
+    public Task<List<User>> GetPendingRoleRequestsAsync(CancellationToken cancellationToken = default)
+    {
+        return _dbContext.Users
+            .Where(x => x.RequestedRole.HasValue)
+            .OrderBy(x => x.Email)
+            .ToListAsync(cancellationToken);
+    }
+
     public async Task AddAsync(User user, CancellationToken cancellationToken = default)
     {
         await _dbContext.Users.AddAsync(user, cancellationToken);

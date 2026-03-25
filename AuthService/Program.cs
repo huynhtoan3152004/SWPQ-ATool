@@ -100,7 +100,7 @@ if (app.Environment.IsDevelopment())
 using (var scope = app.Services.CreateScope())
 {
     var dbContext = scope.ServiceProvider.GetRequiredService<AuthDbContext>();
-    await AuthSeed.SeedAsync(dbContext);
+    await AuthSeed.SeedAsync(dbContext, app.Configuration);
 }
 
 app.UseHttpsRedirection();

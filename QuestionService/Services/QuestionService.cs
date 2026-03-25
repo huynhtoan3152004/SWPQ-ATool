@@ -24,7 +24,7 @@ public class QuestionService : IQuestionService
         _answerApiClient = answerApiClient;
     }
 
-    public async Task<QuestionResponse> CreateAsync(Guid askedBy, CreateQuestionRequest request, CancellationToken cancellationToken = default)
+    public async Task<QuestionResponse> CreateAsync(Guid askedBy, CreateQuestionRequest request, bool autoAssignToTopicLecturer = false, Guid? approvedBy = null, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(request.Title) || string.IsNullOrWhiteSpace(request.Content))
         {
@@ -50,8 +50,9 @@ public class QuestionService : IQuestionService
             SemesterId = request.SemesterId,
             AskedBy = askedBy,
             Visibility = request.Visibility,
-            AssignedTo = topic.LecturerId,
-            Status = QuestionStatus.ASSIGNED,
+            ApprovedBy = autoAssignToTopicLecturer ? approvedBy ?? askedBy : null,
+            AssignedTo = autoAssignToTopicLecturer ? topic.LecturerId : null,
+            Status = autoAssignToTopicLecturer ? QuestionStatus.ASSIGNED : QuestionStatus.PENDING,
             CreatedAt = DateTime.UtcNow
         };
 
@@ -86,7 +87,17 @@ public class QuestionService : IQuestionService
 
         var topicResponse = new TopicResponse(
             topic.Id,
+            topic.Code,
             topic.Name,
+            topic.NameEn,
+            topic.NameVn,
+            topic.SubmittedBy,
+            topic.ResponsibleBy,
+            topic.Context,
+            topic.Problems,
+            topic.Actors,
+            topic.FunctionalRequirements,
+            topic.References,
             topic.SemesterId,
             topic.LecturerId,
             semester.Name,
@@ -150,6 +161,37 @@ public class QuestionService : IQuestionService
         }
 
         question.AssignedTo = teacherId;
+        question.Status = QuestionStatus.ASSIGNED;
+
+        await _questionRepository.SaveChangesAsync(cancellationToken);
+        return ToResponse(question);
+    }
+
+    public async Task<QuestionResponse?> AssignToTopicLecturerAsync(Guid questionId, CancellationToken cancellationToken = default)
+    {
+        var question = await _questionRepository.GetByIdAsync(questionId, cancellationToken);
+        if (question is null)
+        {
+            return null;
+        }
+
+        if (question.Status == QuestionStatus.ANSWERED)
+        {
+            throw new InvalidOperationException("ANSWERED question cannot be reassigned.");
+        }
+
+        if (question.Status != QuestionStatus.APPROVED && question.Status != QuestionStatus.ASSIGNED)
+        {
+            throw new InvalidOperationException("Only APPROVED or ASSIGNED question can be assigned to topic lecturer.");
+        }
+
+        var topic = await _topicRepository.GetByIdAsync(question.TopicId, cancellationToken);
+        if (topic is null)
+        {
+            throw new InvalidOperationException("Topic not found.");
+        }
+
+        question.AssignedTo = topic.LecturerId;
         question.Status = QuestionStatus.ASSIGNED;
 
         await _questionRepository.SaveChangesAsync(cancellationToken);

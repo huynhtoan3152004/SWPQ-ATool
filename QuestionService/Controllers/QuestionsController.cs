@@ -20,18 +20,25 @@ public class QuestionsController : ControllerBase
     }
 
     [HttpPost]
-    [Authorize(Roles = "STUDENT")]
+    [Authorize(Roles = "STUDENT,GVHD")]
     public async Task<IActionResult> Create([FromBody] CreateQuestionRequest request, CancellationToken cancellationToken)
     {
-        var studentId = GetUserId();
-        if (studentId is null)
+        var userId = GetUserId();
+        if (userId is null)
         {
             return Unauthorized();
         }
 
+        var isGvhd = User.IsInRole("GVHD");
+
         try
         {
-            var response = await _questionService.CreateAsync(studentId.Value, request, cancellationToken);
+            var response = await _questionService.CreateAsync(
+                userId.Value,
+                request,
+                autoAssignToTopicLecturer: isGvhd,
+                approvedBy: isGvhd ? userId.Value : null,
+                cancellationToken);
             return Ok(response);
         }
         catch (InvalidOperationException ex)
@@ -118,6 +125,21 @@ public class QuestionsController : ControllerBase
         try
         {
             var response = await _questionService.AssignAsync(id, request.TeacherId, cancellationToken);
+            return response is null ? NotFound() : Ok(response);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    [HttpPatch("{id:guid}/assign-topic-lecturer")]
+    [Authorize(Roles = "GVHD")]
+    public async Task<IActionResult> AssignToTopicLecturer(Guid id, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var response = await _questionService.AssignToTopicLecturerAsync(id, cancellationToken);
             return response is null ? NotFound() : Ok(response);
         }
         catch (InvalidOperationException ex)

@@ -27,6 +27,11 @@ public class TopicRepository : ITopicRepository
             cancellationToken);
     }
 
+    public Task<bool> ExistsCodeAsync(string code, CancellationToken cancellationToken = default)
+    {
+        return _dbContext.Topics.AnyAsync(x => x.Code.ToLower() == code.ToLower(), cancellationToken);
+    }
+
     public Task<bool> ExistsOtherAsync(Guid semesterId, string name, Guid excludeTopicId, CancellationToken cancellationToken = default)
     {
         return _dbContext.Topics.AnyAsync(
@@ -34,9 +39,21 @@ public class TopicRepository : ITopicRepository
             cancellationToken);
     }
 
+    public Task<bool> ExistsOtherCodeAsync(string code, Guid excludeTopicId, CancellationToken cancellationToken = default)
+    {
+        return _dbContext.Topics.AnyAsync(
+            x => x.Id != excludeTopicId && x.Code.ToLower() == code.ToLower(),
+            cancellationToken);
+    }
+
     public Task<Topic?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
         return _dbContext.Topics.FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
+    }
+
+    public Task<Topic?> GetByCodeAsync(string code, CancellationToken cancellationToken = default)
+    {
+        return _dbContext.Topics.FirstOrDefaultAsync(x => x.Code.ToLower() == code.ToLower(), cancellationToken);
     }
 
     public Task<Topic?> GetByTopicAndSemesterAsync(Guid topicId, Guid semesterId, CancellationToken cancellationToken = default)

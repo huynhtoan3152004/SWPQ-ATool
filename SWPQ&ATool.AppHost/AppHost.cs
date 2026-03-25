@@ -33,11 +33,10 @@ builder.AddExecutable(
 	"npm",
 	workingDirectory: fePath,
 	args: new[] { "run", "dev", "--", "--host", "0.0.0.0", "--port", "3000" })
-	.WithEnvironment("PORT", "3000")
-	.WithEnvironment("VITE_AUTH_API", authService.GetEndpoint("http"))
-	.WithEnvironment("VITE_QUESTION_API", questionService.GetEndpoint("http"))
-	.WithEnvironment("VITE_ANSWER_API", answerService.GetEndpoint("http"))
-	.WithHttpEndpoint(port: 3000, targetPort: 3000, isProxied: false)
+	.WithEnvironment("VITE_AUTH_API", "/proxy/auth")
+	.WithEnvironment("VITE_QUESTION_API", "/proxy/question")
+	.WithEnvironment("VITE_ANSWER_API", "/proxy/answer")
+	.WithHttpEndpoint(name: "http", port: 3000, targetPort: 3000, isProxied: false)
 	.WithExternalHttpEndpoints()
 	.WaitFor(authService)
 	.WaitFor(questionService)

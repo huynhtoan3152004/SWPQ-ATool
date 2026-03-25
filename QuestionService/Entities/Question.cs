@@ -41,7 +41,17 @@ public class Semester
 public class Topic
 {
     public Guid Id { get; set; } = Guid.NewGuid();
+    public string Code { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
+    public string NameEn { get; set; } = string.Empty;
+    public string NameVn { get; set; } = string.Empty;
+    public string SubmittedBy { get; set; } = string.Empty;
+    public string ResponsibleBy { get; set; } = string.Empty;
+    public string Context { get; set; } = string.Empty;
+    public string Problems { get; set; } = string.Empty;
+    public string Actors { get; set; } = string.Empty;
+    public string FunctionalRequirements { get; set; } = string.Empty;
+    public string? References { get; set; }
     public Guid SemesterId { get; set; }
     public Guid LecturerId { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

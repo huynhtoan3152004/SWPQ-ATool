@@ -1,0 +1,520 @@
+{
+  "info": {
+    "name": "SWP Q&A - Seed Data + Lecturer Role Flow",
+    "_postman_id": "d7f2d88f-a013-4c9f-81ea-6f36d8f0c9a1",
+    "description": "Luồng Postman hoàn chỉnh: đăng ký giảng viên -> duyệt role -> seed 10 topics -> hỏi/duyệt/trả lời câu hỏi.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "01 - Lecturer Registration + Role Approval",
+      "item": [
+        {
+          "name": "1) Register Lecturer Candidate",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \"{{lecturer_full_name}}\",\n  \"email\": \"{{lecturer_email}}\",\n  \"password\": \"{{default_password}}\"\n}"
+            },
+            "url": "{{auth_base}}/auth/register-lecturer"
+          }
+        },
+        {
+          "name": "2) Login ADMIN",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+                  "const json = pm.response.json();",
+                  "pm.collectionVariables.set('token_admin', json.accessToken);",
+                  "pm.collectionVariables.set('admin_id', json.userId);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{admin_email}}\",\n  \"password\": \"{{default_password}}\"\n}"
+            },
+            "url": "{{auth_base}}/auth/login"
+          }
+        },
+        {
+          "name": "3) Get Pending Role Requests",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+                  "const list = pm.response.json();",
+                  "const candidateEmail = pm.collectionVariables.get('lecturer_email');",
+                  "const candidate = Array.isArray(list) ? list.find(x => String(x.email).toLowerCase() === String(candidateEmail).toLowerCase()) : null;",
+                  "if (candidate) {",
+                  "  pm.collectionVariables.set('pending_user_id', candidate.userId);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token_admin}}" }
+            ],
+            "url": "{{auth_base}}/auth/users/pending-role-requests"
+          }
+        },
+        {
+          "name": "4) Approve Candidate to TEACHER",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token_admin}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"role\": \"TEACHER\"\n}"
+            },
+            "url": "{{auth_base}}/auth/users/{{pending_user_id}}/role"
+          }
+        },
+        {
+          "name": "5) Login Approved Lecturer",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status 200', function () { pm.response.to.have.status(200); });",
+                  "const json = pm.response.json();",
+                  "pm.collectionVariables.set('token_teacher_seed', json.accessToken);",
+                  "pm.collectionVariables.set('teacher_seed_id', json.userId);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{lecturer_email}}\",\n  \"password\": \"{{default_password}}\"\n}"
+            },
+            "url": "{{auth_base}}/auth/login"
+          }
+        }
+      ]
+    },
+    {
+      "name": "02 - Seed 10 Topics via APIs",
+      "item": [
+        {
+          "name": "1) Login GVHD",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "pm.collectionVariables.set('token_gvhd', json.accessToken);",
+                  "pm.collectionVariables.set('gvhd_id', json.userId);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{gvhd_email}}\",\n  \"password\": \"{{default_password}}\"\n}"
+            },
+            "url": "{{auth_base}}/auth/login"
+          }
+        },
+        {
+          "name": "2) Create Semester SPRING 2026 (optional)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "  const json = pm.response.json();",
+                  "  if (json && json.id) pm.collectionVariables.set('semester_id', json.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token_gvhd}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"SPRING\",\n  \"year\": 2026,\n  \"month\": 3\n}"
+            },
+            "url": "{{question_base}}/semesters"
+          }
+        },
+        {
+          "name": "3) Get Semester SPRING 2026",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const list = pm.response.json();",
+                  "const sem = Array.isArray(list) ? list.find(x => x.name === 'SPRING' && x.year === 2026 && x.month === 3) : null;",
+                  "pm.test('SPRING 2026 exists', function () { pm.expect(!!sem).to.eql(true); });",
+                  "if (sem) pm.collectionVariables.set('semester_id', sem.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{token_gvhd}}" }
+            ],
+            "url": "{{question_base}}/semesters"
+          }
+        },
+        {
+          "name": "4) Create Topic SWPSP26-08",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token_gvhd}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"code\": \"SWPSP26-08\",\n  \"nameEn\": \"Smart Parking Management System\",\n  \"nameVn\": \"Hệ thống quản lý bãi đỗ xe thông minh\",\n  \"submittedBy\": \"MinhNT01\",\n  \"responsibleBy\": \"MinhNT01\",\n  \"context\": \"Hệ thống giúp quản lý bãi đỗ xe thông minh với khả năng theo dõi chỗ trống theo thời gian thực.\",\n  \"problems\": \"Thiếu thông tin chỗ trống, gây ùn tắc và mất thời gian tìm chỗ đậu xe.\",\n  \"actors\": \"Driver, Parking Staff, Admin\",\n  \"functionalRequirements\": \"Driver tìm chỗ trống; Đặt chỗ trước; Thanh toán online; Staff quản lý bãi xe\",\n  \"references\": null,\n  \"semesterId\": \"{{semester_id}}\",\n  \"lecturerId\": \"{{teacher_seed_id}}\"\n}" },
+            "url": "{{question_base}}/topics"
+          }
+        },
+        {
+          "name": "5) Create Topic SWPSP26-09",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token_gvhd}}" }
+            ],
+            "body": { "mode": "raw", "raw": "{\n  \"code\": \"SWPSP26-09\",\n  \"nameEn\": \"Online Food Donation Platform\",\n  \"nameVn\": \"Nền tảng quyên góp thực phẩm trực tuyến\",\n  \"submittedBy\": \"HieuNV02\",\n  \"responsibleBy\": \"HieuNV02\",\n  \"context\": \"Kết nối người có thực phẩm dư thừa với tổ chức từ thiện.\",\n  \"problems\": \"Lãng phí thực phẩm, thiếu kết nối giữa người cho và người nhận.\",\n  \"actors\": \"Donor, Charity, Admin\",\n  \"functionalRequirements\": \"Đăng bài quyên góp; Nhận yêu cầu; Theo dõi phân phối\",\n  \"references\": null,\n  \"semesterId\": \"{{semester_id}}\",\n  \"lecturerId\": \"{{teacher_seed_id}}\"\n}" },
+            "url": "{{question_base}}/topics"
+          }
+        },
+        {
+          "name": "6) Create Topic SWPSP26-10",
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{token_gvhd}}" } ],
+            "body": { "mode": "raw", "raw": "{\n  \"code\": \"SWPSP26-10\",\n  \"nameEn\": \"University Event Management System\",\n  \"nameVn\": \"Hệ thống quản lý sự kiện đại học\",\n  \"submittedBy\": \"LinhTT03\",\n  \"responsibleBy\": \"LinhTT03\",\n  \"context\": \"Quản lý sự kiện trong trường đại học.\",\n  \"problems\": \"Thiếu hệ thống quản lý đăng ký và tổ chức sự kiện.\",\n  \"actors\": \"Student, Organizer, Admin\",\n  \"functionalRequirements\": \"Tạo sự kiện; Đăng ký tham gia; Check-in QR\",\n  \"references\": null,\n  \"semesterId\": \"{{semester_id}}\",\n  \"lecturerId\": \"{{teacher_seed_id}}\"\n}" },
+            "url": "{{question_base}}/topics"
+          }
+        },
+        {
+          "name": "7) Create Topic SWPSP26-11",
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{token_gvhd}}" } ],
+            "body": { "mode": "raw", "raw": "{\n  \"code\": \"SWPSP26-11\",\n  \"nameEn\": \"Online Tutor Matching Platform\",\n  \"nameVn\": \"Nền tảng kết nối gia sư trực tuyến\",\n  \"submittedBy\": \"AnPT04\",\n  \"responsibleBy\": \"AnPT04\",\n  \"context\": \"Kết nối học sinh với gia sư phù hợp.\",\n  \"problems\": \"Khó tìm gia sư uy tín và phù hợp.\",\n  \"actors\": \"Student, Tutor, Admin\",\n  \"functionalRequirements\": \"Tìm gia sư; Booking; Rating\",\n  \"references\": null,\n  \"semesterId\": \"{{semester_id}}\",\n  \"lecturerId\": \"{{teacher_seed_id}}\"\n}" },
+            "url": "{{question_base}}/topics"
+          }
+        },
+        {
+          "name": "8) Create Topic SWPSP26-12",
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{token_gvhd}}" } ],
+            "body": { "mode": "raw", "raw": "{\n  \"code\": \"SWPSP26-12\",\n  \"nameEn\": \"Healthcare Appointment Booking System\",\n  \"nameVn\": \"Hệ thống đặt lịch khám bệnh trực tuyến\",\n  \"submittedBy\": \"BinhLT05\",\n  \"responsibleBy\": \"BinhLT05\",\n  \"context\": \"Đặt lịch khám bệnh online.\",\n  \"problems\": \"Quá tải bệnh viện, chờ đợi lâu.\",\n  \"actors\": \"Patient, Doctor, Admin\",\n  \"functionalRequirements\": \"Đặt lịch; Quản lý lịch khám; Nhắc lịch\",\n  \"references\": null,\n  \"semesterId\": \"{{semester_id}}\",\n  \"lecturerId\": \"{{teacher_seed_id}}\"\n}" },
+            "url": "{{question_base}}/topics"
+          }
+        },
+        {
+          "name": "9) Create Topic SWPSP26-13",
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{token_gvhd}}" } ],
+            "body": { "mode": "raw", "raw": "{\n  \"code\": \"SWPSP26-13\",\n  \"nameEn\": \"Online Learning Management System\",\n  \"nameVn\": \"Hệ thống quản lý học tập trực tuyến\",\n  \"submittedBy\": \"MinhNT01\",\n  \"responsibleBy\": \"MinhNT01\",\n  \"context\": \"Hỗ trợ học online.\",\n  \"problems\": \"Thiếu nền tảng học tập tập trung.\",\n  \"actors\": \"Student, Teacher, Admin\",\n  \"functionalRequirements\": \"Upload bài học; Làm bài tập; Chấm điểm\",\n  \"references\": null,\n  \"semesterId\": \"{{semester_id}}\",\n  \"lecturerId\": \"{{teacher_seed_id}}\"\n}" },
+            "url": "{{question_base}}/topics"
+          }
+        },
+        {
+          "name": "10) Create Topic SWPSP26-14",
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{token_gvhd}}" } ],
+            "body": { "mode": "raw", "raw": "{\n  \"code\": \"SWPSP26-14\",\n  \"nameEn\": \"Job Recruitment Platform\",\n  \"nameVn\": \"Nền tảng tuyển dụng việc làm\",\n  \"submittedBy\": \"HieuNV02\",\n  \"responsibleBy\": \"HieuNV02\",\n  \"context\": \"Kết nối nhà tuyển dụng và ứng viên.\",\n  \"problems\": \"Khó tìm việc phù hợp.\",\n  \"actors\": \"Candidate, Recruiter, Admin\",\n  \"functionalRequirements\": \"Đăng job; Apply job; Tracking\",\n  \"references\": null,\n  \"semesterId\": \"{{semester_id}}\",\n  \"lecturerId\": \"{{teacher_seed_id}}\"\n}" },
+            "url": "{{question_base}}/topics"
+          }
+        },
+        {
+          "name": "11) Create Topic SWPSP26-15",
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{token_gvhd}}" } ],
+            "body": { "mode": "raw", "raw": "{\n  \"code\": \"SWPSP26-15\",\n  \"nameEn\": \"Online Marketplace for Handmade Products\",\n  \"nameVn\": \"Sàn thương mại điện tử đồ handmade\",\n  \"submittedBy\": \"LinhTT03\",\n  \"responsibleBy\": \"LinhTT03\",\n  \"context\": \"Nền tảng bán đồ handmade.\",\n  \"problems\": \"Người bán nhỏ lẻ khó tiếp cận khách hàng.\",\n  \"actors\": \"Seller, Buyer, Admin\",\n  \"functionalRequirements\": \"Đăng sản phẩm; Mua hàng; Thanh toán\",\n  \"references\": null,\n  \"semesterId\": \"{{semester_id}}\",\n  \"lecturerId\": \"{{teacher_seed_id}}\"\n}" },
+            "url": "{{question_base}}/topics"
+          }
+        },
+        {
+          "name": "12) Create Topic SWPSP26-16",
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{token_gvhd}}" } ],
+            "body": { "mode": "raw", "raw": "{\n  \"code\": \"SWPSP26-16\",\n  \"nameEn\": \"Fitness Tracking Application\",\n  \"nameVn\": \"Ứng dụng theo dõi sức khỏe và tập luyện\",\n  \"submittedBy\": \"AnPT04\",\n  \"responsibleBy\": \"AnPT04\",\n  \"context\": \"Theo dõi sức khỏe và tập luyện.\",\n  \"problems\": \"Người dùng thiếu động lực theo dõi sức khỏe.\",\n  \"actors\": \"User, Trainer\",\n  \"functionalRequirements\": \"Track workout; Goal setting; Analytics\",\n  \"references\": null,\n  \"semesterId\": \"{{semester_id}}\",\n  \"lecturerId\": \"{{teacher_seed_id}}\"\n}" },
+            "url": "{{question_base}}/topics"
+          }
+        },
+        {
+          "name": "13) Create Topic SWPSP26-17",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json && json.id) pm.collectionVariables.set('topic_id', json.id);",
+                  "pm.collectionVariables.set('topic_code', 'SWPSP26-17');"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{token_gvhd}}" } ],
+            "body": { "mode": "raw", "raw": "{\n  \"code\": \"SWPSP26-17\",\n  \"nameEn\": \"Online Library Management System\",\n  \"nameVn\": \"Hệ thống quản lý thư viện trực tuyến\",\n  \"submittedBy\": \"BinhLT05\",\n  \"responsibleBy\": \"BinhLT05\",\n  \"context\": \"Quản lý thư viện số.\",\n  \"problems\": \"Khó quản lý sách và mượn trả.\",\n  \"actors\": \"Reader, Librarian, Admin\",\n  \"functionalRequirements\": \"Mượn sách; Trả sách; Tìm kiếm\",\n  \"references\": null,\n  \"semesterId\": \"{{semester_id}}\",\n  \"lecturerId\": \"{{teacher_seed_id}}\"\n}" },
+            "url": "{{question_base}}/topics"
+          }
+        }
+      ]
+    },
+    {
+      "name": "03 - Ask / Approve / Assign / Answer",
+      "item": [
+        {
+          "name": "1) Login STUDENT",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "pm.collectionVariables.set('token_student', json.accessToken);",
+                  "pm.collectionVariables.set('student_id', json.userId);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"{{student_email}}\",\n  \"password\": \"{{default_password}}\"\n}" },
+            "url": "{{auth_base}}/auth/login"
+          }
+        },
+        {
+          "name": "2) Get Topic by Code (SWPSP26-08)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "pm.collectionVariables.set('topic_id', json.id);",
+                  "pm.collectionVariables.set('semester_id', json.semesterId);",
+                  "pm.collectionVariables.set('topic_code', json.code);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [ { "key": "Authorization", "value": "Bearer {{token_student}}" } ],
+            "url": "{{question_base}}/topics/by-code/SWPSP26-08"
+          }
+        },
+        {
+          "name": "3) Create Question",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json && json.id) pm.collectionVariables.set('question_id', json.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token_student}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Question {{$timestamp}}\",\n  \"content\": \"Cho em hỏi kiến trúc service phù hợp cho đề tài này?\",\n  \"topicId\": \"{{topic_id}}\",\n  \"semesterId\": \"{{semester_id}}\",\n  \"visibility\": \"PUBLIC\"\n}"
+            },
+            "url": "{{question_base}}/questions"
+          }
+        },
+        {
+          "name": "4) Login GVHD",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "pm.collectionVariables.set('token_gvhd', json.accessToken);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"{{gvhd_email}}\",\n  \"password\": \"{{default_password}}\"\n}" },
+            "url": "{{auth_base}}/auth/login"
+          }
+        },
+        {
+          "name": "5) Approve Question",
+          "request": {
+            "method": "PATCH",
+            "header": [ { "key": "Authorization", "value": "Bearer {{token_gvhd}}" } ],
+            "url": "{{question_base}}/questions/{{question_id}}/approve"
+          }
+        },
+        {
+          "name": "6) Assign To Topic Lecturer",
+          "request": {
+            "method": "PATCH",
+            "header": [ { "key": "Authorization", "value": "Bearer {{token_gvhd}}" } ],
+            "url": "{{question_base}}/questions/{{question_id}}/assign-topic-lecturer"
+          }
+        },
+        {
+          "name": "7) Login Approved Lecturer",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "pm.collectionVariables.set('token_teacher_seed', json.accessToken);",
+                  "pm.collectionVariables.set('teacher_seed_id', json.userId);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [ { "key": "Content-Type", "value": "application/json" } ],
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"{{lecturer_email}}\",\n  \"password\": \"{{default_password}}\"\n}" },
+            "url": "{{auth_base}}/auth/login"
+          }
+        },
+        {
+          "name": "8) Create Answer",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{token_teacher_seed}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"questionId\": \"{{question_id}}\",\n  \"content\": \"Nên tách module theo bounded context và dùng event để đồng bộ trạng thái.\"\n}"
+            },
+            "url": "{{answer_base}}/answers"
+          }
+        },
+        {
+          "name": "9) Verify Question Answered",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const j = pm.response.json();",
+                  "pm.test('Question status is ANSWERED', function () { pm.expect(j.status).to.eql('ANSWERED'); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [ { "key": "Authorization", "value": "Bearer {{token_teacher_seed}}" } ],
+            "url": "{{question_base}}/questions/{{question_id}}"
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    { "key": "auth_base", "value": "http://localhost:5001" },
+    { "key": "question_base", "value": "http://localhost:5028" },
+    { "key": "answer_base", "value": "http://localhost:5260" },
+
+    { "key": "default_password", "value": "123456" },
+    { "key": "admin_email", "value": "admin@swp.local" },
+    { "key": "gvhd_email", "value": "gvhd1@swp.local" },
+    { "key": "student_email", "value": "student1@swp.local" },
+
+    { "key": "lecturer_full_name", "value": "Minh Nguyen Seed" },
+    { "key": "lecturer_email", "value": "minh.seed{{$timestamp}}@swp.local" },
+
+    { "key": "token_admin", "value": "" },
+    { "key": "token_gvhd", "value": "" },
+    { "key": "token_student", "value": "" },
+    { "key": "token_teacher_seed", "value": "" },
+
+    { "key": "admin_id", "value": "" },
+    { "key": "gvhd_id", "value": "" },
+    { "key": "student_id", "value": "" },
+    { "key": "teacher_seed_id", "value": "" },
+    { "key": "pending_user_id", "value": "" },
+
+    { "key": "semester_id", "value": "" },
+    { "key": "topic_id", "value": "" },
+    { "key": "topic_code", "value": "" },
+    { "key": "question_id", "value": "" }
+  ]
+}

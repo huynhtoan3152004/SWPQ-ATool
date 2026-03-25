@@ -30,6 +30,20 @@ public class AuthController : ControllerBase
         }
     }
 
+    [HttpPost("register-lecturer")]
+    public async Task<IActionResult> RegisterLecturer([FromBody] RegisterLecturerRequest request, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var response = await _authService.RegisterLecturerAsync(request, cancellationToken);
+            return Ok(response);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginRequest request, CancellationToken cancellationToken)
     {
@@ -64,5 +78,28 @@ public class AuthController : ControllerBase
     {
         var user = await _authService.ChangeUserRoleAsync(userId, request.Role, cancellationToken);
         return user is null ? NotFound(new { message = "User not found." }) : Ok(user);
+    }
+
+    [HttpGet("users/pending-role-requests")]
+    [Authorize(Roles = "ADMIN")]
+    public async Task<IActionResult> GetPendingRoleRequests(CancellationToken cancellationToken)
+    {
+        var users = await _authService.GetPendingRoleRequestsAsync(cancellationToken);
+        return Ok(users);
+    }
+
+    [HttpPost("admin/users")]
+    [Authorize(Roles = "ADMIN")]
+    public async Task<IActionResult> AdminCreateUser([FromBody] AdminCreateUserRequest request, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var user = await _authService.AdminCreateUserAsync(request, cancellationToken);
+            return Ok(user);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
     }
 }

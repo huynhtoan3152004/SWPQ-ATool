@@ -28,7 +28,17 @@ public static class QuestionSeed
         await dbContext.Database.ExecuteSqlRawAsync(@"
             CREATE TABLE IF NOT EXISTS ""Topics"" (
                 ""Id"" uuid NOT NULL,
+                ""Code"" character varying(50) NOT NULL,
                 ""Name"" character varying(200) NOT NULL,
+                ""NameEn"" character varying(300) NOT NULL,
+                ""NameVn"" character varying(500) NOT NULL,
+                ""SubmittedBy"" character varying(100) NOT NULL,
+                ""ResponsibleBy"" character varying(100) NOT NULL,
+                ""Context"" text NOT NULL,
+                ""Problems"" text NOT NULL,
+                ""Actors"" text NOT NULL,
+                ""FunctionalRequirements"" text NOT NULL,
+                ""References"" character varying(2000),
                 ""SemesterId"" uuid NOT NULL,
                 ""LecturerId"" uuid NOT NULL,
                 ""CreatedAt"" timestamp with time zone NOT NULL,
@@ -37,20 +47,145 @@ public static class QuestionSeed
             );
         ");
 
-        var defaultLecturerId = Guid.Parse("77777777-7777-7777-7777-777777777777");
-
         await dbContext.Database.ExecuteSqlRawAsync(@"
             ALTER TABLE ""Topics"" ADD COLUMN IF NOT EXISTS ""LecturerId"" uuid;
         ");
 
-        await dbContext.Database.ExecuteSqlInterpolatedAsync($@"
-            UPDATE ""Topics""
-            SET ""LecturerId"" = {defaultLecturerId}
-            WHERE ""LecturerId"" IS NULL;
+        await dbContext.Database.ExecuteSqlRawAsync(@"
+            ALTER TABLE ""Topics"" ADD COLUMN IF NOT EXISTS ""Code"" character varying(50);
         ");
 
         await dbContext.Database.ExecuteSqlRawAsync(@"
-            ALTER TABLE ""Topics"" ALTER COLUMN ""LecturerId"" SET NOT NULL;
+            ALTER TABLE ""Topics"" ADD COLUMN IF NOT EXISTS ""NameEn"" character varying(300);
+        ");
+
+        await dbContext.Database.ExecuteSqlRawAsync(@"
+            ALTER TABLE ""Topics"" ADD COLUMN IF NOT EXISTS ""NameVn"" character varying(500);
+        ");
+
+        await dbContext.Database.ExecuteSqlRawAsync(@"
+            ALTER TABLE ""Topics"" ADD COLUMN IF NOT EXISTS ""SubmittedBy"" character varying(100);
+        ");
+
+        await dbContext.Database.ExecuteSqlRawAsync(@"
+            ALTER TABLE ""Topics"" ADD COLUMN IF NOT EXISTS ""ResponsibleBy"" character varying(100);
+        ");
+
+        await dbContext.Database.ExecuteSqlRawAsync(@"
+            ALTER TABLE ""Topics"" ADD COLUMN IF NOT EXISTS ""Context"" text;
+        ");
+
+        await dbContext.Database.ExecuteSqlRawAsync(@"
+            ALTER TABLE ""Topics"" ADD COLUMN IF NOT EXISTS ""Problems"" text;
+        ");
+
+        await dbContext.Database.ExecuteSqlRawAsync(@"
+            ALTER TABLE ""Topics"" ADD COLUMN IF NOT EXISTS ""Actors"" text;
+        ");
+
+        await dbContext.Database.ExecuteSqlRawAsync(@"
+            ALTER TABLE ""Topics"" ADD COLUMN IF NOT EXISTS ""FunctionalRequirements"" text;
+        ");
+
+        await dbContext.Database.ExecuteSqlRawAsync(@"
+            ALTER TABLE ""Topics"" ADD COLUMN IF NOT EXISTS ""References"" character varying(2000);
+        ");
+
+        await dbContext.Database.ExecuteSqlRawAsync(@"
+            UPDATE ""Topics""
+            SET
+                ""Code"" = COALESCE(NULLIF(trim(""Code""), ''), 'TOPIC-' || substring(""Id""::text, 1, 8)),
+                ""NameEn"" = COALESCE(""NameEn"", ""Name""),
+                ""NameVn"" = COALESCE(""NameVn"", ""Name""),
+                ""SubmittedBy"" = COALESCE(""SubmittedBy"", 'system'),
+                ""ResponsibleBy"" = COALESCE(""ResponsibleBy"", 'system'),
+                ""Context"" = COALESCE(""Context"", 'N/A'),
+                ""Problems"" = COALESCE(""Problems"", 'N/A'),
+                ""Actors"" = COALESCE(""Actors"", 'N/A'),
+                ""FunctionalRequirements"" = COALESCE(""FunctionalRequirements"", 'N/A');
+        ");
+
+        await dbContext.Database.ExecuteSqlRawAsync(@"
+            UPDATE ""Topics""
+            SET ""Code"" = upper(trim(""Code""));
+        ");
+
+        await dbContext.Database.ExecuteSqlRawAsync(@"
+            WITH ranked AS (
+                SELECT
+                    ""Id"",
+                    ""Code"",
+                    row_number() OVER (PARTITION BY ""Code"" ORDER BY ""CreatedAt"", ""Id"") AS rn
+                FROM ""Topics""
+            )
+            UPDATE ""Topics"" t
+            SET ""Code"" = left(r.""Code"", 41) || '-' || substring(t.""Id""::text, 1, 8)
+            FROM ranked r
+            WHERE t.""Id"" = r.""Id""
+              AND r.rn > 1;
+        ");
+
+        await dbContext.Database.ExecuteSqlRawAsync(@"
+            ALTER TABLE ""Topics"" ALTER COLUMN ""Code"" SET NOT NULL;
+        ");
+
+        await dbContext.Database.ExecuteSqlRawAsync(@"
+            ALTER TABLE ""Topics"" ALTER COLUMN ""NameEn"" SET NOT NULL;
+        ");
+
+        await dbContext.Database.ExecuteSqlRawAsync(@"
+            ALTER TABLE ""Topics"" ALTER COLUMN ""NameVn"" SET NOT NULL;
+        ");
+
+        await dbContext.Database.ExecuteSqlRawAsync(@"
+            ALTER TABLE ""Topics"" ALTER COLUMN ""SubmittedBy"" SET NOT NULL;
+        ");
+
+        await dbContext.Database.ExecuteSqlRawAsync(@"
+            ALTER TABLE ""Topics"" ALTER COLUMN ""ResponsibleBy"" SET NOT NULL;
+        ");
+
+        await dbContext.Database.ExecuteSqlRawAsync(@"
+            ALTER TABLE ""Topics"" ALTER COLUMN ""Context"" SET NOT NULL;
+        ");
+
+        await dbContext.Database.ExecuteSqlRawAsync(@"
+            ALTER TABLE ""Topics"" ALTER COLUMN ""Problems"" SET NOT NULL;
+        ");
+
+        await dbContext.Database.ExecuteSqlRawAsync(@"
+            ALTER TABLE ""Topics"" ALTER COLUMN ""Actors"" SET NOT NULL;
+        ");
+
+        await dbContext.Database.ExecuteSqlRawAsync(@"
+            ALTER TABLE ""Topics"" ALTER COLUMN ""FunctionalRequirements"" SET NOT NULL;
+        ");
+
+        await dbContext.Database.ExecuteSqlRawAsync(@"
+            DO $$
+            BEGIN
+                IF NOT EXISTS (SELECT 1 FROM ""Topics"" WHERE ""LecturerId"" IS NULL) THEN
+                    ALTER TABLE ""Topics"" ALTER COLUMN ""LecturerId"" SET NOT NULL;
+                END IF;
+            END $$;
+        ");
+
+        await dbContext.Database.ExecuteSqlRawAsync(@"
+            DO $$
+            BEGIN
+                IF EXISTS (
+                    SELECT 1
+                    FROM ""Topics""
+                    GROUP BY ""Code""
+                    HAVING COUNT(*) > 1
+                ) THEN
+                    CREATE INDEX IF NOT EXISTS ""IX_Topics_Code_NonUnique""
+                    ON ""Topics"" (""Code"");
+                ELSE
+                    CREATE UNIQUE INDEX IF NOT EXISTS ""IX_Topics_Code""
+                    ON ""Topics"" (""Code"");
+                END IF;
+            END $$;
         ");
 
         await dbContext.Database.ExecuteSqlRawAsync(@"
@@ -63,75 +198,92 @@ public static class QuestionSeed
             ON ""Topics"" (""LecturerId"");
         ");
 
-        var semesterSpring2026Id = Guid.Parse("33333333-3333-3333-3333-333333333333");
-        var semesterFall2026Id = Guid.Parse("44444444-4444-4444-4444-444444444444");
-        var topicSwpArchitectureId = Guid.Parse("22222222-2222-2222-2222-222222222222");
-        var topicCloudDeploymentId = Guid.Parse("55555555-5555-5555-5555-555555555555");
+        await dbContext.Database.ExecuteSqlRawAsync(@"
+            ALTER TABLE ""Questions"" ADD COLUMN IF NOT EXISTS ""AskedBy"" uuid;
+        ");
 
-        if (!await dbContext.Semesters.AnyAsync())
-        {
-            await dbContext.Semesters.AddRangeAsync(
-                new Semester
-                {
-                    Id = semesterSpring2026Id,
-                    Name = "SPRING",
-                    Year = 2026,
-                    Month = 3,
-                    CreatedAt = DateTime.UtcNow
-                },
-                new Semester
-                {
-                    Id = semesterFall2026Id,
-                    Name = "FALL",
-                    Year = 2026,
-                    Month = 9,
-                    CreatedAt = DateTime.UtcNow
-                });
+        await dbContext.Database.ExecuteSqlRawAsync(@"
+            ALTER TABLE ""Questions"" ADD COLUMN IF NOT EXISTS ""TopicId"" uuid;
+        ");
 
-            await dbContext.SaveChangesAsync();
-        }
+        await dbContext.Database.ExecuteSqlRawAsync(@"
+            ALTER TABLE ""Questions"" ADD COLUMN IF NOT EXISTS ""SemesterId"" uuid;
+        ");
 
-        if (!await dbContext.Topics.AnyAsync())
-        {
-            await dbContext.Topics.AddRangeAsync(
-                new Topic
-                {
-                    Id = topicSwpArchitectureId,
-                    Name = "SWP Architecture",
-                    SemesterId = semesterSpring2026Id,
-                    LecturerId = defaultLecturerId,
-                    CreatedAt = DateTime.UtcNow
-                },
-                new Topic
-                {
-                    Id = topicCloudDeploymentId,
-                    Name = "Cloud Deployment",
-                    SemesterId = semesterFall2026Id,
-                    LecturerId = defaultLecturerId,
-                    CreatedAt = DateTime.UtcNow
-                });
+        await dbContext.Database.ExecuteSqlRawAsync(@"
+            ALTER TABLE ""Questions"" ADD COLUMN IF NOT EXISTS ""Visibility"" text;
+        ");
 
-            await dbContext.SaveChangesAsync();
-        }
+        await dbContext.Database.ExecuteSqlRawAsync(@"
+            UPDATE ""Questions""
+            SET ""AskedBy"" = ""StudentId""
+            WHERE ""AskedBy"" IS NULL;
+        ");
 
-        if (await dbContext.Questions.AnyAsync())
-        {
-            return;
-        }
+        await dbContext.Database.ExecuteSqlRawAsync(@"
+            UPDATE ""Questions"" q
+            SET ""TopicId"" = t.""Id""
+            FROM ""Topics"" t
+            WHERE q.""TopicId"" IS NULL
+              AND lower(q.""Topic"") = lower(t.""Name"");
+        ");
 
-        var sampleQuestion = new Question
-        {
-            Title = "SWP topic clarification",
-            Content = "Cho em hỏi scope của topic kỳ này cần triển khai đến mức nào?",
-            TopicId = topicSwpArchitectureId,
-            SemesterId = semesterSpring2026Id,
-            AskedBy = Guid.Parse("11111111-1111-1111-1111-111111111111"),
-            Visibility = QuestionVisibility.PUBLIC,
-            Status = QuestionStatus.PENDING,
-            CreatedAt = DateTime.UtcNow
-        };
+        await dbContext.Database.ExecuteSqlRawAsync(@"
+            UPDATE ""Questions"" q
+            SET ""SemesterId"" = t.""SemesterId""
+            FROM ""Topics"" t
+            WHERE q.""SemesterId"" IS NULL
+              AND q.""TopicId"" = t.""Id"";
+        ");
 
-        await dbContext.Questions.AddAsync(sampleQuestion);
-        await dbContext.SaveChangesAsync();
+        await dbContext.Database.ExecuteSqlRawAsync(@"
+            UPDATE ""Questions""
+            SET
+                ""TopicId"" = COALESCE(""TopicId"", (SELECT ""Id"" FROM ""Topics"" ORDER BY ""CreatedAt"" LIMIT 1)),
+                ""SemesterId"" = COALESCE(""SemesterId"", (SELECT ""Id"" FROM ""Semesters"" ORDER BY ""CreatedAt"" LIMIT 1)),
+                ""Visibility"" = COALESCE(""Visibility"", 'PUBLIC'),
+                ""AskedBy"" = COALESCE(""AskedBy"", ""StudentId"")
+            WHERE ""TopicId"" IS NULL
+               OR ""SemesterId"" IS NULL
+               OR ""Visibility"" IS NULL
+               OR ""AskedBy"" IS NULL;
+        ");
+
+        await dbContext.Database.ExecuteSqlRawAsync(@"
+            DO $$
+            BEGIN
+                IF NOT EXISTS (SELECT 1 FROM ""Questions"" WHERE ""TopicId"" IS NULL) THEN
+                    ALTER TABLE ""Questions"" ALTER COLUMN ""TopicId"" SET NOT NULL;
+                END IF;
+
+                IF NOT EXISTS (SELECT 1 FROM ""Questions"" WHERE ""SemesterId"" IS NULL) THEN
+                    ALTER TABLE ""Questions"" ALTER COLUMN ""SemesterId"" SET NOT NULL;
+                END IF;
+
+                IF NOT EXISTS (SELECT 1 FROM ""Questions"" WHERE ""Visibility"" IS NULL) THEN
+                    ALTER TABLE ""Questions"" ALTER COLUMN ""Visibility"" SET NOT NULL;
+                END IF;
+
+                IF NOT EXISTS (SELECT 1 FROM ""Questions"" WHERE ""AskedBy"" IS NULL) THEN
+                    ALTER TABLE ""Questions"" ALTER COLUMN ""AskedBy"" SET NOT NULL;
+                END IF;
+            END $$;
+        ");
+
+        await dbContext.Database.ExecuteSqlRawAsync(@"
+            DROP INDEX IF EXISTS ""IX_Questions_Topic_Status"";
+        ");
+
+        await dbContext.Database.ExecuteSqlRawAsync(@"
+            CREATE INDEX IF NOT EXISTS ""IX_Questions_TopicId_SemesterId_Status""
+            ON ""Questions"" (""TopicId"", ""SemesterId"", ""Status"");
+        ");
+
+        await dbContext.Database.ExecuteSqlRawAsync(@"
+            CREATE INDEX IF NOT EXISTS ""IX_Questions_TopicId_SemesterId_Visibility""
+            ON ""Questions"" (""TopicId"", ""SemesterId"", ""Visibility"");
+        ");
+
+        return;
     }
 }

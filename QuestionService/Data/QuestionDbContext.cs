@@ -43,10 +43,21 @@ public class QuestionDbContext : DbContext
         modelBuilder.Entity<Topic>(entity =>
         {
             entity.HasKey(x => x.Id);
+            entity.Property(x => x.Code).IsRequired().HasMaxLength(50);
             entity.Property(x => x.Name).IsRequired().HasMaxLength(200);
+            entity.Property(x => x.NameEn).IsRequired().HasMaxLength(300);
+            entity.Property(x => x.NameVn).IsRequired().HasMaxLength(500);
+            entity.Property(x => x.SubmittedBy).IsRequired().HasMaxLength(100);
+            entity.Property(x => x.ResponsibleBy).IsRequired().HasMaxLength(100);
+            entity.Property(x => x.Context).IsRequired();
+            entity.Property(x => x.Problems).IsRequired();
+            entity.Property(x => x.Actors).IsRequired();
+            entity.Property(x => x.FunctionalRequirements).IsRequired();
+            entity.Property(x => x.References).HasMaxLength(2000);
             entity.Property(x => x.SemesterId).IsRequired();
             entity.Property(x => x.LecturerId).IsRequired();
             entity.Property(x => x.CreatedAt).IsRequired();
+            entity.HasIndex(x => x.Code).IsUnique();
             entity.HasIndex(x => new { x.SemesterId, x.Name }).IsUnique();
             entity.HasIndex(x => x.LecturerId);
 
