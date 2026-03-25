@@ -1,5 +1,7 @@
 var builder = DistributedApplication.CreateBuilder(args);
 
+var fePath = @"D:\WorkSpace\Ki8\ASSPRN\swp-q&a-system";
+
 var postgres = builder.AddPostgres("postgres")
 	.WithDataVolume()
 	.WithPgAdmin();
@@ -18,12 +20,27 @@ var questionService = builder.AddProject<Projects.QuestionService>("questionserv
 	.WaitFor(questionDb)
 	.WaitFor(authService);
 
-builder.AddProject<Projects.AnswerService>("answerservice")
+var answerService = builder.AddProject<Projects.AnswerService>("answerservice")
 	.WithReference(answerDb)
 	.WithReference(questionService)
 	.WithReference(authService)
 	.WaitFor(answerDb)
 	.WaitFor(questionService)
 	.WaitFor(authService);
+
+builder.AddExecutable(
+	"fe",
+	"npm",
+	workingDirectory: fePath,
+	args: new[] { "run", "dev", "--", "--host", "0.0.0.0", "--port", "3000" })
+	.WithEnvironment("PORT", "3000")
+	.WithEnvironment("VITE_AUTH_API", authService.GetEndpoint("http"))
+	.WithEnvironment("VITE_QUESTION_API", questionService.GetEndpoint("http"))
+	.WithEnvironment("VITE_ANSWER_API", answerService.GetEndpoint("http"))
+	.WithHttpEndpoint(port: 3000, targetPort: 3000, isProxied: false)
+	.WithExternalHttpEndpoints()
+	.WaitFor(authService)
+	.WaitFor(questionService)
+	.WaitFor(answerService);
 
 builder.Build().Run();
