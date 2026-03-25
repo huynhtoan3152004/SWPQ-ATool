@@ -8,11 +8,13 @@ public class TopicService : ITopicService
 {
     private readonly ITopicRepository _topicRepository;
     private readonly ISemesterRepository _semesterRepository;
+    private readonly IQuestionRepository _questionRepository;
 
-    public TopicService(ITopicRepository topicRepository, ISemesterRepository semesterRepository)
+    public TopicService(ITopicRepository topicRepository, ISemesterRepository semesterRepository, IQuestionRepository questionRepository)
     {
         _topicRepository = topicRepository;
         _semesterRepository = semesterRepository;
+        _questionRepository = questionRepository;
     }
 
     public async Task<TopicResponse> CreateAsync(CreateTopicRequest request, CancellationToken cancellationToken = default)
@@ -63,6 +65,23 @@ public class TopicService : ITopicService
         return topics.Select(x => ToResponse(x.Topic, x.Semester)).ToList();
     }
 
+    public async Task<TopicResponse?> GetByIdAsync(Guid topicId, CancellationToken cancellationToken = default)
+    {
+        var topic = await _topicRepository.GetByIdAsync(topicId, cancellationToken);
+        if (topic is null)
+        {
+            return null;
+        }
+
+        var semester = await _semesterRepository.GetByIdAsync(topic.SemesterId, cancellationToken);
+        if (semester is null)
+        {
+            throw new InvalidOperationException("Semester not found.");
+        }
+
+        return ToResponse(topic, semester);
+    }
+
     public async Task<TopicResponse?> UpdateAsync(Guid topicId, Guid callerId, bool canReassignLecturer, UpdateTopicRequest request, CancellationToken cancellationToken = default)
     {
         var topic = await _topicRepository.GetByIdAsync(topicId, cancellationToken);
@@ -111,6 +130,30 @@ public class TopicService : ITopicService
         }
 
         return ToResponse(topic, semester);
+    }
+
+    public async Task<bool> DeleteAsync(Guid topicId, Guid callerId, bool canDeleteAny, CancellationToken cancellationToken = default)
+    {
+        var topic = await _topicRepository.GetByIdAsync(topicId, cancellationToken);
+        if (topic is null)
+        {
+            return false;
+        }
+
+        if (!canDeleteAny && topic.LecturerId != callerId)
+        {
+            throw new InvalidOperationException("You are not allowed to delete this topic.");
+        }
+
+        var hasQuestions = await _questionRepository.ExistsByTopicIdAsync(topicId, cancellationToken);
+        if (hasQuestions)
+        {
+            throw new InvalidOperationException("Cannot delete topic because it already has questions.");
+        }
+
+        _topicRepository.Remove(topic);
+        await _topicRepository.SaveChangesAsync(cancellationToken);
+        return true;
     }
 
     private static TopicResponse ToResponse(Topic topic, Semester semester)

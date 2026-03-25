@@ -44,6 +44,11 @@ public class TopicRepository : ITopicRepository
         return _dbContext.Topics.FirstOrDefaultAsync(x => x.Id == topicId && x.SemesterId == semesterId, cancellationToken);
     }
 
+    public void Remove(Topic topic)
+    {
+        _dbContext.Topics.Remove(topic);
+    }
+
     public Task SaveChangesAsync(CancellationToken cancellationToken = default)
     {
         return _dbContext.SaveChangesAsync(cancellationToken);

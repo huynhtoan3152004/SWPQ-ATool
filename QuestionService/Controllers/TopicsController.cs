@@ -46,6 +46,20 @@ public class TopicsController : ControllerBase
         return Ok(response);
     }
 
+    [HttpGet("{id:guid}")]
+    public async Task<IActionResult> GetById(Guid id, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var response = await _topicService.GetByIdAsync(id, cancellationToken);
+            return response is null ? NotFound() : Ok(response);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
     [HttpPatch("{id:guid}")]
     [Authorize(Roles = "TEACHER,GVHD,ADMIN")]
     public async Task<IActionResult> Update(Guid id, [FromBody] UpdateTopicRequest request, CancellationToken cancellationToken)
@@ -62,6 +76,29 @@ public class TopicsController : ControllerBase
         {
             var response = await _topicService.UpdateAsync(id, callerId.Value, canReassignLecturer, request, cancellationToken);
             return response is null ? NotFound() : Ok(response);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    [HttpDelete("{id:guid}")]
+    [Authorize(Roles = "TEACHER,GVHD,ADMIN")]
+    public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationToken)
+    {
+        var callerId = GetUserId();
+        if (callerId is null)
+        {
+            return Unauthorized();
+        }
+
+        var canDeleteAny = User.IsInRole("GVHD") || User.IsInRole("ADMIN");
+
+        try
+        {
+            var deleted = await _topicService.DeleteAsync(id, callerId.Value, canDeleteAny, cancellationToken);
+            return deleted ? NoContent() : NotFound();
         }
         catch (InvalidOperationException ex)
         {

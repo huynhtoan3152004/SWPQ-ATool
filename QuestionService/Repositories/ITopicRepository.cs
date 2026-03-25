@@ -9,6 +9,7 @@ public interface ITopicRepository
     Task<bool> ExistsOtherAsync(Guid semesterId, string name, Guid excludeTopicId, CancellationToken cancellationToken = default);
     Task<Topic?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
     Task<Topic?> GetByTopicAndSemesterAsync(Guid topicId, Guid semesterId, CancellationToken cancellationToken = default);
+    void Remove(Topic topic);
     Task SaveChangesAsync(CancellationToken cancellationToken = default);
     Task<List<(Topic Topic, Semester Semester)>> GetAllWithSemesterAsync(
         Guid? semesterId,

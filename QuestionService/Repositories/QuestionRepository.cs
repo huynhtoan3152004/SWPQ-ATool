@@ -25,6 +25,11 @@ public class QuestionRepository : IQuestionRepository
         return _dbContext.Questions.FirstOrDefaultAsync(x => x.Id == id, cancellationToken);
     }
 
+    public Task<bool> ExistsByTopicIdAsync(Guid topicId, CancellationToken cancellationToken = default)
+    {
+        return _dbContext.Questions.AnyAsync(x => x.TopicId == topicId, cancellationToken);
+    }
+
     public Task<List<Question>> GetAllAsync(Guid? topicId, Guid? semesterId, Guid? assignedTo, QuestionVisibility? visibility, int? year, int? month, CancellationToken cancellationToken = default)
     {
         var query = from question in _dbContext.Questions

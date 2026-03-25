@@ -54,6 +54,28 @@ public class AnswersController : ControllerBase
         return Ok(response);
     }
 
+    [HttpPost("by-questions")]
+    public async Task<IActionResult> GetByQuestions([FromBody] GetAnswersByQuestionIdsRequest request, CancellationToken cancellationToken)
+    {
+        if (request.QuestionIds is null || request.QuestionIds.Count == 0)
+        {
+            return Ok(new List<AnswersByQuestionResponse>());
+        }
+
+        var questionIds = request.QuestionIds
+            .Where(x => x != Guid.Empty)
+            .Distinct()
+            .ToList();
+
+        if (questionIds.Count == 0)
+        {
+            return Ok(new List<AnswersByQuestionResponse>());
+        }
+
+        var response = await _answerService.GetByQuestionIdsAsync(questionIds, cancellationToken);
+        return Ok(response);
+    }
+
     private Guid? GetUserId()
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);

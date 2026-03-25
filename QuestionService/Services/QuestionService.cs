@@ -1,3 +1,4 @@
+using QuestionService.Clients;
 using QuestionService.Entities;
 using QuestionService.Models;
 using QuestionService.Repositories;
@@ -8,11 +9,19 @@ public class QuestionService : IQuestionService
 {
     private readonly IQuestionRepository _questionRepository;
     private readonly ITopicRepository _topicRepository;
+    private readonly ISemesterRepository _semesterRepository;
+    private readonly IAnswerApiClient _answerApiClient;
 
-    public QuestionService(IQuestionRepository questionRepository, ITopicRepository topicRepository)
+    public QuestionService(
+        IQuestionRepository questionRepository,
+        ITopicRepository topicRepository,
+        ISemesterRepository semesterRepository,
+        IAnswerApiClient answerApiClient)
     {
         _questionRepository = questionRepository;
         _topicRepository = topicRepository;
+        _semesterRepository = semesterRepository;
+        _answerApiClient = answerApiClient;
     }
 
     public async Task<QuestionResponse> CreateAsync(Guid askedBy, CreateQuestionRequest request, CancellationToken cancellationToken = default)
@@ -54,6 +63,51 @@ public class QuestionService : IQuestionService
     {
         var questions = await _questionRepository.GetAllAsync(topicId, semesterId, assignedTo, visibility, year, month, cancellationToken);
         return questions.Select(ToResponse).ToList();
+    }
+
+    public async Task<TopicQuestionThreadResponse?> GetTopicThreadAsync(Guid topicId, Guid semesterId, string bearerToken, CancellationToken cancellationToken = default)
+    {
+        var topic = await _topicRepository.GetByTopicAndSemesterAsync(topicId, semesterId, cancellationToken);
+        if (topic is null)
+        {
+            return null;
+        }
+
+        var questions = await _questionRepository.GetAllAsync(topicId, semesterId, null, null, null, null, cancellationToken);
+        var questionIds = questions.Select(x => x.Id).ToList();
+
+        var answersByQuestion = await _answerApiClient.GetAnswersByQuestionIdsAsync(questionIds, bearerToken, cancellationToken);
+
+        var semester = await _semesterRepository.GetByIdAsync(semesterId, cancellationToken);
+        if (semester is null)
+        {
+            throw new InvalidOperationException("Semester not found.");
+        }
+
+        var topicResponse = new TopicResponse(
+            topic.Id,
+            topic.Name,
+            topic.SemesterId,
+            topic.LecturerId,
+            semester.Name,
+            semester.Year,
+            semester.Month,
+            topic.CreatedAt);
+
+        var threadItems = questions
+            .Select(question =>
+            {
+                var answerList = answersByQuestion.TryGetValue(question.Id, out var answers)
+                    ? answers
+                    : new List<TopicAnswerResponse>();
+
+                return new TopicQuestionItemResponse(
+                    ToResponse(question),
+                    answerList);
+            })
+            .ToList();
+
+        return new TopicQuestionThreadResponse(topicResponse, threadItems);
     }
 
     public async Task<QuestionResponse?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)

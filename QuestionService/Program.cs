@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using QuestionService.Clients;
 using QuestionService.Data;
 using QuestionService.Repositories;
 using QuestionService.Services;
@@ -40,6 +41,12 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
 builder.Services.AddAuthorization();
 builder.Services.AddControllers();
+
+builder.Services.AddHttpClient<IAnswerApiClient, AnswerApiClient>(client =>
+{
+    var baseUrl = builder.Configuration["Services:AnswerServiceBaseUrl"] ?? "http://answerservice";
+    client.BaseAddress = new Uri(baseUrl);
+});
 
 builder.Services.AddScoped<IQuestionRepository, QuestionRepository>();
 builder.Services.AddScoped<ISemesterRepository, SemesterRepository>();

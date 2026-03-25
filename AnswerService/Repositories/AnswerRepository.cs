@@ -27,4 +27,18 @@ public class AnswerRepository : IAnswerRepository
             .OrderBy(x => x.CreatedAt)
             .ToListAsync(cancellationToken);
     }
+
+    public Task<List<Answer>> GetByQuestionIdsAsync(IReadOnlyCollection<Guid> questionIds, CancellationToken cancellationToken = default)
+    {
+        if (questionIds.Count == 0)
+        {
+            return Task.FromResult(new List<Answer>());
+        }
+
+        return _dbContext.Answers
+            .Where(x => questionIds.Contains(x.QuestionId))
+            .OrderBy(x => x.QuestionId)
+            .ThenBy(x => x.CreatedAt)
+            .ToListAsync(cancellationToken);
+    }
 }

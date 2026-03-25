@@ -54,6 +54,35 @@ public class QuestionsController : ControllerBase
         return Ok(response);
     }
 
+    [HttpGet("topic-thread")]
+    public async Task<IActionResult> GetTopicThread(
+        [FromQuery] Guid topicId,
+        [FromQuery] Guid semesterId,
+        CancellationToken cancellationToken)
+    {
+        if (topicId == Guid.Empty || semesterId == Guid.Empty)
+        {
+            return BadRequest(new { message = "topicId and semesterId are required." });
+        }
+
+        var authHeader = HttpContext.Request.Headers.Authorization.ToString();
+        var bearerToken = authHeader.Replace("Bearer ", string.Empty, StringComparison.OrdinalIgnoreCase).Trim();
+        if (string.IsNullOrWhiteSpace(bearerToken))
+        {
+            return Unauthorized();
+        }
+
+        try
+        {
+            var response = await _questionService.GetTopicThreadAsync(topicId, semesterId, bearerToken, cancellationToken);
+            return response is null ? NotFound() : Ok(response);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
     [HttpGet("{id:guid}")]
     public async Task<IActionResult> GetById(Guid id, CancellationToken cancellationToken)
     {

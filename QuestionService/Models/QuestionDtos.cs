@@ -24,6 +24,21 @@ public record QuestionResponse(
     Guid? AssignedTo,
     DateTime CreatedAt);
 
+public record TopicAnswerResponse(
+    Guid Id,
+    Guid QuestionId,
+    Guid TeacherId,
+    string Content,
+    DateTime CreatedAt);
+
+public record TopicQuestionItemResponse(
+    QuestionResponse Question,
+    List<TopicAnswerResponse> Answers);
+
+public record TopicQuestionThreadResponse(
+    TopicResponse Topic,
+    List<TopicQuestionItemResponse> Questions);
+
 public record CreateSemesterRequest(
     string Name,
     int Year,

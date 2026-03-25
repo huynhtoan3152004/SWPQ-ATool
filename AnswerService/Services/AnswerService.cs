@@ -38,6 +38,25 @@ public class AnswerService : IAnswerService
         return answers.Select(ToResponse).ToList();
     }
 
+    public async Task<List<AnswersByQuestionResponse>> GetByQuestionIdsAsync(IReadOnlyCollection<Guid> questionIds, CancellationToken cancellationToken = default)
+    {
+        if (questionIds.Count == 0)
+        {
+            return new List<AnswersByQuestionResponse>();
+        }
+
+        var answers = await _answerRepository.GetByQuestionIdsAsync(questionIds, cancellationToken);
+
+        var grouped = answers
+            .GroupBy(x => x.QuestionId)
+            .Select(group => new AnswersByQuestionResponse(
+                group.Key,
+                group.Select(ToResponse).ToList()))
+            .ToList();
+
+        return grouped;
+    }
+
     private static AnswerResponse ToResponse(Answer answer)
     {
         return new AnswerResponse(
